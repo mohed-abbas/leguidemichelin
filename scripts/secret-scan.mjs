@@ -55,6 +55,12 @@ for (const file of staged()) {
       if (name === "Generic .env-file content" && file.endsWith(".example")) {
         continue;
       }
+      // Shell / yaml files legitimately use `VAR=value` and `VAR: value` syntax
+      // for their own variable assignments. Skip the generic-env-content check
+      // for these — the specific-key patterns (Stripe / AWS) still run.
+      if (name === "Generic .env-file content" && /\.(sh|bash|zsh|ya?ml)$/.test(file)) {
+        continue;
+      }
       console.error(`[secret-scan] BLOCK: ${file} contains ${name}`);
       failed = true;
     }
