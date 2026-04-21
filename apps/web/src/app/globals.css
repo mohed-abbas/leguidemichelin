@@ -1,0 +1,75 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@repo/tokens/tokens.css";
+
+/*
+ * Tailwind v4 CSS-first theme. Maps our token variable names (from
+ * packages/tokens/tokens.css) to shadcn/ui's expected names so:
+ *   - `bg-primary` / `text-primary-foreground` resolve through our tokens
+ *   - shadcn primitives consume our tokens transparently
+ *   - the async designer re-skins by editing tokens.css ONLY
+ */
+@theme {
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-ink);
+  --color-foreground-muted: var(--color-ink-muted);
+  --color-surface: var(--color-surface);
+  --color-surface-muted: var(--color-surface-muted);
+  --color-border: var(--color-border);
+  --color-primary: var(--color-primary);
+  --color-primary-foreground: var(--color-primary-fg);
+  --color-accent: var(--color-accent);
+  --color-accent-foreground: var(--color-primary-fg);
+  --color-muted: var(--color-surface-muted);
+  --color-muted-foreground: var(--color-ink-muted);
+  --color-destructive: var(--color-destructive);
+  --color-destructive-foreground: var(--color-destructive-fg);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-info: var(--color-info);
+  --color-ring: var(--color-focus-ring);
+  --color-input: var(--color-border);
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-ink);
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--color-ink);
+  --color-secondary: var(--color-surface-muted);
+  --color-secondary-foreground: var(--color-ink);
+  --radius: var(--radius-md);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --font-sans: var(--font-sans);
+}
+
+/* ─── Global resets / baseline ──────────────────────────────────────── */
+html {
+  font-size: 16px; /* Explicit px → predictable rem math across both shells */
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Skip-link: visually hidden until focused */
+.skip-link {
+  position: absolute;
+  top: -999px;
+  left: 0;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  padding: var(--space-sm) var(--space-md);
+  z-index: var(--z-install-hint);
+}
+.skip-link:focus-visible {
+  top: var(--space-sm);
+  box-shadow: var(--shadow-focus);
+}
