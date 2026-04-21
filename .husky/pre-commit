@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+# Husky v9 pre-commit — modern flat pattern (no `.husky/_/husky.sh` sourcing).
+#
+# Layer 1: Block staged files that contain secret-shaped strings or that
+# are .env files (.env.example allow-listed). See scripts/secret-scan.mjs.
+node scripts/secret-scan.mjs
+
+# Layer 2: ESLint + Prettier on staged files per lint-staged.config.js.
+npx lint-staged
