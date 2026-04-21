@@ -1,22 +1,21 @@
 /**
- * Prisma seed — idempotent upsert of Michelin restaurant fixtures.
+ * Prisma seed — idempotent upsert of Michelin restaurant fixtures + per-tier dishes.
  *
- * Plan 3 (this file) ships the skeleton: loader + Prisma disconnect.
- * Plan 7 completes it: restaurants.fallback.json (≥20 entries) + full seed
- * logic including per-rating dish fixtures.
+ * - Loads `tools/scrape/seed-data/restaurants.json` if present + non-empty;
+ *   otherwise falls back to `restaurants.fallback.json` (DATA-02).
+ * - Upserts by `michelinSlug` (T-01-SEED-INJECTION — exact match on UNIQUE column).
+ * - Inserts ~3 dishes per rating tier ONLY if a restaurant has zero dishes yet
+ *   (idempotent even across re-runs).
+ *
+ * Run via: npm run db:seed
  */
 import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { prisma } from "../src/index.js";
 
-const SEED_DIR = join(
-  import.meta.dirname ?? process.cwd(),
-  "..",
-  "..",
-  "tools",
-  "scrape",
-  "seed-data",
-);
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const SEED_DIR = join(__dirname, "..", "..", "..", "tools", "scrape", "seed-data");
 
 interface RestaurantFixture {
   michelinSlug: string;
@@ -31,6 +30,18 @@ interface RestaurantFixture {
   heroImageKey: string | null;
 }
 
+const DISHES_BY_RATING: Record<RestaurantFixture["michelinRating"], string[]> = {
+  BIB: ["Entrée du jour", "Plat du marché", "Dessert maison"],
+  ONE: ["Foie gras poêlé", "Bar en croûte de sel", "Soufflé au chocolat"],
+  TWO: ["Homard bleu", "Pigeon au sang", "Vacherin aux fruits rouges"],
+  THREE: ["Caviar osciètre", "Turbot de ligne", "Mille-feuille vanille Bourbon"],
+};
+
+function basePriceCents(r: RestaurantFixture["michelinRating"]): number {
+  // D-05: Int cents. Scales with tier.
+  return { BIB: 2500, ONE: 6500, TWO: 15000, THREE: 35000 }[r];
+}
+
 async function loadRestaurants(): Promise<RestaurantFixture[]> {
   const mainPath = join(SEED_DIR, "restaurants.json");
   const fallbackPath = join(SEED_DIR, "restaurants.fallback.json");
@@ -42,35 +53,67 @@ async function loadRestaurants(): Promise<RestaurantFixture[]> {
       return data;
     }
   } catch {
-    /* fall through */
+    /* fall through to fallback */
   }
-  try {
-    const body = await readFile(fallbackPath, "utf8");
-    const data = JSON.parse(body);
-    console.log(`[seed] using fallback fixture (${data.length} restaurants)`);
-    return data;
-  } catch {
-    console.warn(
-      "[seed] No fixtures yet — Plan 7 will commit restaurants.fallback.json. Exiting cleanly.",
-    );
-    return [];
-  }
+  console.log("[seed] main fixture missing or empty — using fallback");
+  const body = await readFile(fallbackPath, "utf8");
+  const data = JSON.parse(body);
+  console.log(`[seed] fallback has ${data.length} restaurants`);
+  return data;
 }
 
 async function main() {
   const restaurants = await loadRestaurants();
-  if (restaurants.length === 0) {
-    await prisma.$disconnect();
-    return;
+
+  for (const r of restaurants) {
+    const upserted = await prisma.restaurant.upsert({
+      where: { michelinSlug: r.michelinSlug },
+      create: {
+        michelinSlug: r.michelinSlug,
+        slug: r.slug,
+        name: r.name,
+        city: r.city,
+        address: r.address,
+        lat: r.lat,
+        lng: r.lng,
+        michelinRating: r.michelinRating,
+        cuisine: r.cuisine,
+        heroImageKey: r.heroImageKey,
+      },
+      update: {
+        name: r.name,
+        address: r.address,
+        lat: r.lat,
+        lng: r.lng,
+        michelinRating: r.michelinRating,
+        cuisine: r.cuisine,
+      },
+    });
+
+    // Idempotent dish seed — only insert if this restaurant has zero dishes.
+    const existing = await prisma.dish.count({ where: { restaurantId: upserted.id } });
+    if (existing === 0) {
+      const dishes = DISHES_BY_RATING[r.michelinRating];
+      for (let i = 0; i < dishes.length; i++) {
+        await prisma.dish.create({
+          data: {
+            restaurantId: upserted.id,
+            name: dishes[i]!,
+            description: null,
+            priceCents: basePriceCents(r.michelinRating),
+            sortOrder: i,
+          },
+        });
+      }
+    }
   }
-  // Full upsert logic lands in Plan 7.
-  console.log(
-    `[seed] skeleton — Plan 7 will upsert ${restaurants.length} restaurants.`,
-  );
+
+  console.log(`[seed] done — ${restaurants.length} restaurants upserted`);
   await prisma.$disconnect();
 }
 
-main().catch((err) => {
+main().catch(async (err) => {
   console.error(err);
-  process.exitCode = 1;
+  await prisma.$disconnect().catch(() => {});
+  process.exit(1);
 });

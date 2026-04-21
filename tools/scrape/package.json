@@ -1,0 +1,18 @@
+{
+  "name": "@repo/scrape",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "One-shot Michelin restaurant scraper — runs manually in dev, NEVER in CI or runtime.",
+  "scripts": {
+    "scrape": "tsx src/scrape-michelin.ts --cities=paris,lyon",
+    "scrape:dry": "tsx src/scrape-michelin.ts --cities=paris --dry-run"
+  },
+  "devDependencies": {
+    "@repo/config": "*",
+    "@types/node": "^22.9.0",
+    "playwright": "^1.59.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.6.0"
+  }
+}
