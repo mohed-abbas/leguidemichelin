@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Guide Foodie Journey — placeholder star">
+  <rect width="512" height="512" rx="96" ry="96" fill="#B71C1C"/>
+  <!-- Custom 6-point outlined star — deliberately NOT Michelin's 5-point solid (PITFALLS #11) -->
+  <g transform="translate(256 256)" fill="none" stroke="#FFFFFF" stroke-width="16" stroke-linejoin="round">
+    <polygon points="
+      0,-176
+      41,-64
+      152,-64
+      76,16
+      94,136
+      0,72
+      -94,136
+      -76,16
+      -152,-64
+      -41,-64
+    "/>
+  </g>
+</svg>

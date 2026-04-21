@@ -24,6 +24,7 @@ export const metadata: Metadata = {
   title: "Guide Foodie Journey",
   description: "Collectez vos souvenirs des restaurants Michelin.",
   applicationName: "Guide Foodie Journey",
+  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     title: "Foodie Journey",
@@ -32,7 +33,6 @@ export const metadata: Metadata = {
   other: {
     "mobile-web-app-capable": "yes",
   },
-  // manifest link lands in Plan 5 when manifest.webmanifest is written
   icons: {
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
     icon: [

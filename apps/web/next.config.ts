@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { withSerwist } from "@serwist/turbopack";
 
 const monorepoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -23,11 +24,11 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Turbopack is the Next 16 default; no explicit flag needed.
-  //
-  // Plan 5 (01-05-pwa-chrome) edits this file to wrap the export with
-  // `@serwist/turbopack`'s `withSerwist`, gated on NODE_ENV !== 'development'
-  // per UI-SPEC's non-negotiable dev-disable rule (PITFALLS #8).
 };
 
-export default nextConfig;
+// PITFALLS #8 + UI-SPEC: Service worker is OFF in dev (non-negotiable).
+//   - Dev: rewrites work, SW never registers.
+//   - Prod: Serwist wraps with skipWaiting + clientsClaim.
+export default process.env.NODE_ENV === "development"
+  ? nextConfig
+  : withSerwist(nextConfig);
