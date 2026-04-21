@@ -1,0 +1,33 @@
+{
+  "name": "@repo/api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@repo/db": "*",
+    "@repo/shared-schemas": "*",
+    "better-auth": "^1.6.5",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "express": "^5.2.1",
+    "helmet": "^8.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@repo/config": "*",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.9.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.6.0"
+  }
+}
