@@ -1,0 +1,10 @@
+node_modules
+dist
+build
+.next
+coverage
+**/.prisma
+**/generated
+package-lock.json
+tools/scrape/seed-data/*.json
+apps/web/public

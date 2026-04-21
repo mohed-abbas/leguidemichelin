@@ -1,0 +1,12 @@
+* text=auto eol=lf
+
+# Binary asset types — do not attempt to diff or normalize
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.webp   binary
+*.ico    binary
+*.woff   binary
+*.woff2  binary
+*.ttf    binary
+*.pdf    binary
