@@ -1,0 +1,17 @@
+{
+  "name": "@repo/config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared TS + ESLint + Tailwind preset for Guide Foodie Journey.",
+  "type": "module",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./eslint/base.js": "./eslint/base.js",
+    "./tailwind.preset.js": "./tailwind.preset.js"
+  },
+  "files": [
+    "tsconfig.base.json",
+    "eslint",
+    "tailwind.preset.js"
+  ]
+}

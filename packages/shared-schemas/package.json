@@ -1,0 +1,25 @@
+{
+  "name": "@repo/shared-schemas",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Zod DTOs shared between apps/web and apps/api. Phase 2+ consumers.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "echo \"(no lint target in Phase 1)\""
+  },
+  "dependencies": {
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}
