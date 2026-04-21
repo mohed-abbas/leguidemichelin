@@ -1,0 +1,90 @@
+name: guide-foodie-journey-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-foodie}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-foodie}
+      POSTGRES_DB: ${POSTGRES_DB:-foodie}
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+    ports:
+      - "54321:5432" # non-standard host port to avoid local Postgres conflicts
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-foodie}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      target: dev
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-foodie}:${POSTGRES_PASSWORD:-foodie}@postgres:5432/${POSTGRES_DB:-foodie}?schema=public
+    # node_modules_root is an empty named volume (PITFALLS #17 macOS perf).
+    # On first compose up, install into it before running migrate; on subsequent
+    # runs, `npm ci` is a fast no-op if package-lock.json is unchanged.
+    command: sh -c "npm install --ignore-scripts --no-audit --no-fund && npm run generate --workspace=packages/db && cd packages/db && npx prisma migrate deploy"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./:/workspace:cached
+      - node_modules_root:/workspace/node_modules
+    restart: "no" # one-shot
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      target: dev
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-foodie}:${POSTGRES_PASSWORD:-foodie}@postgres:5432/${POSTGRES_DB:-foodie}?schema=public
+      API_PORT: "3001"
+      WEB_ORIGIN: "http://localhost:3000"
+      BETTER_AUTH_URL: "http://localhost:3000"
+    # `migrate` already populated node_modules_root; reuse that and boot.
+    command: sh -c "npm install --ignore-scripts --no-audit --no-fund && npm run dev --workspace=apps/api"
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./:/workspace:cached
+      - node_modules_root:/workspace/node_modules
+      - images-dev-data:/var/data/images
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      target: dev
+    env_file: .env
+    environment:
+      API_INTERNAL_URL: "http://api:3001"
+      BETTER_AUTH_URL: "http://localhost:3000"
+      NODE_ENV: "development"
+    command: sh -c "npm install --ignore-scripts --no-audit --no-fund && npm run dev --workspace=apps/web"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/workspace:cached
+      - node_modules_root:/workspace/node_modules
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  postgres-dev-data:
+  images-dev-data:
+  node_modules_root:

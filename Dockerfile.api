@@ -1,0 +1,66 @@
+# syntax=docker/dockerfile:1.7
+
+# ─── Base ──────────────────────────────────────────
+FROM node:22-alpine AS base
+WORKDIR /workspace
+RUN apk add --no-cache libc6-compat openssl
+# Pin npm to match the team (corepack disabled to avoid pnpm/yarn shims we don't use).
+RUN corepack disable && npm i -g npm@10
+
+# ─── Dev ───────────────────────────────────────────
+FROM base AS dev
+ENV NODE_ENV=development
+# Source mounted by compose at runtime; no COPY here.
+CMD ["npm", "run", "dev", "--workspace=apps/api"]
+
+# ─── Builder ───────────────────────────────────────
+FROM base AS builder
+# Install with NODE_ENV unset so devDeps (tsc, @types/*, etc.) land in node_modules.
+# Runtime stage re-installs with --omit=dev.
+
+# Copy all workspace manifests first for layer caching (WORKAROUND: npm workspaces
+# don't support partial installs; copying all package.json files + lockfile lets
+# us cache the install layer independent of source changes).
+COPY package.json package-lock.json ./
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+COPY packages/db/package.json packages/db/
+COPY packages/shared-schemas/package.json packages/shared-schemas/
+COPY packages/tokens/package.json packages/tokens/
+COPY packages/config/package.json packages/config/
+COPY tools/scrape/package.json tools/scrape/
+
+# --ignore-scripts skips packages/db's postinstall (`prisma generate`) — the
+# schema isn't in the context yet. We run `npm run generate` after COPY below.
+RUN npm ci --workspaces --include-workspace-root --ignore-scripts
+
+# Copy source
+COPY . .
+
+# Generate Prisma client + build api
+RUN npm run generate --workspace=packages/db \
+ && npm run build --workspace=packages/db \
+ && npm run build --workspace=apps/api
+
+# ─── Runtime ───────────────────────────────────────
+FROM base AS runtime
+ENV NODE_ENV=production
+WORKDIR /app
+
+# Prune to production deps.
+COPY --from=builder /workspace/package.json /workspace/package-lock.json ./
+COPY --from=builder /workspace/apps/api/package.json ./apps/api/
+COPY --from=builder /workspace/packages/db/package.json ./packages/db/
+COPY --from=builder /workspace/packages/shared-schemas/package.json ./packages/shared-schemas/
+
+RUN npm ci --omit=dev --workspaces --include-workspace-root --ignore-scripts
+
+# Copy built artifacts
+COPY --from=builder /workspace/apps/api/dist ./apps/api/dist
+COPY --from=builder /workspace/packages/db/dist ./packages/db/dist
+COPY --from=builder /workspace/packages/db/prisma ./packages/db/prisma
+COPY --from=builder /workspace/packages/shared-schemas/dist ./packages/shared-schemas/dist
+COPY --from=builder /workspace/node_modules ./node_modules
+
+EXPOSE 3001
+CMD ["node", "apps/api/dist/index.js"]

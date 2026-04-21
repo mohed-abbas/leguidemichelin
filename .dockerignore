@@ -1,0 +1,40 @@
+# Node / build outputs — copied explicitly from /workspace in builder stages
+node_modules
+**/node_modules
+**/.next
+**/dist
+**/coverage
+**/.turbo
+
+# Version control
+.git
+.gitignore
+
+# Secrets — NEVER inside the build context
+.env
+.env.*
+!.env.example
+
+# Planning artifacts (local to hackathon/ repo only, but exclude from
+# guide-dev/ image context too for belt-and-braces)
+.planning
+hackathon
+
+# Docs + editor + OS
+*.md
+!README.md
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test outputs
+test-results
+playwright-report
+
+# Runtime image dir (never in the build context)
+/var
