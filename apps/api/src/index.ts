@@ -5,6 +5,7 @@ import helmet from "helmet";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./auth.js";
 import { requireAuth, type AuthedRequest } from "./middleware/auth.js";
+import { errorHandler } from "./middleware/error.js";
 
 const app = express();
 const PORT = Number(process.env.API_PORT ?? 3001);
@@ -49,8 +50,21 @@ app.get("/healthz", (_req: Request, res: Response) => {
   res.json({ status: "ok", ts: new Date().toISOString() });
 });
 
+// ─── Future routers (Phase 3 plans 04–09) mount here, between health and 404 ───
+// app.use("/api/images", imagesRouter);
+// app.use("/api/restaurants", restaurantsRouter);
+// app.use("/api/souvenirs", souvenirsRouter);
+// app.use("/api/me", meRouter);
+// app.use("/api/rewards", rewardsRouter);
+// app.use("/api/redeem", redeemRouter);
+// app.use("/api/portal", portalRouter);
+// app.use("/api/admin", adminRouter);
+
 // ─── 404 (catch-all for unrouted paths) ─────────────────────────────
 app.use((_req: Request, res: Response) => res.status(404).json({ error: "not_found" }));
+
+// ─── Error handler (MUST be last — Express 4-arg signature) ────────
+app.use(errorHandler);
 
 // ─── Listen ─────────────────────────────────────────────────────────
 const server = app.listen(PORT, () => {
