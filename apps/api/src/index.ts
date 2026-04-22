@@ -6,6 +6,7 @@ import { toNodeHandler } from "better-auth/node";
 import { auth } from "./auth.js";
 import { requireAuth, type AuthedRequest } from "./middleware/auth.js";
 import { errorHandler } from "./middleware/error.js";
+import { imagesRouter } from "./routes/images.js";
 
 const app = express();
 const PORT = Number(process.env.API_PORT ?? 3001);
@@ -50,8 +51,11 @@ app.get("/healthz", (_req: Request, res: Response) => {
   res.json({ status: "ok", ts: new Date().toISOString() });
 });
 
-// ─── Future routers (Phase 3 plans 04–09) mount here, between health and 404 ───
-// app.use("/api/images", imagesRouter);
+// ─── Domain routers ─────────────────────────────────────────────────
+// Order matters only within auth-protected surfaces. /api/images is public.
+app.use("/api/images", imagesRouter);
+
+// Future routers (Phase 3 plans 05–09) mount below, before the 404.
 // app.use("/api/restaurants", restaurantsRouter);
 // app.use("/api/souvenirs", souvenirsRouter);
 // app.use("/api/me", meRouter);
