@@ -30,10 +30,12 @@ pass() { echo "PASS: $*"; }
 
 sign_in() {
   local jar="$1" email="$2" password="$3"
-  curl -s -S -o /dev/null -c "$jar" \
+  local code
+  code=$(curl -s -S -o /dev/null -c "$jar" -w '%{http_code}' \
     -H "content-type: application/json" -H "origin: $ORIGIN" \
     -X POST "$API/api/auth/sign-in/email" \
-    -d "{\"email\":\"$email\",\"password\":\"$password\"}" || fail "sign_in $email"
+    -d "{\"email\":\"$email\",\"password\":\"$password\"}") || fail "sign_in $email curl error"
+  [ "$code" = "200" ] || fail "sign_in $email returned HTTP $code (expected 200)"
   [ -s "$jar" ] || fail "sign_in $email produced empty cookie jar"
 }
 
