@@ -109,6 +109,89 @@ async function main() {
   }
 
   console.log(`[seed] done — ${restaurants.length} restaurants upserted`);
+
+  // ─── Phase 2 D-02: seed RESTAURANT_STAFF per restaurant ─────────────
+  // IMPORTANT: we do NOT import @repo/api (backwards workspace dep).
+  // Instead, we call the running API over HTTP for password hashing,
+  // then use Prisma to lift role + restaurantId (D-01: role.input: false
+  // means role cannot be set via signup body).
+  //
+  // This makes `npm run db:seed` depend on the API server being up.
+  // See guide-dev/README.md "Demo Credentials" for the required run order.
+
+  const API_BASE = process.env.SEED_API_BASE ?? "http://localhost:3001";
+  const STAFF_PASSWORD = "DemoStaff2026!"; // documented in guide-dev/README.md
+
+  // Pre-flight: wait up to 30s for /healthz. Fail fast with a clear message.
+  async function waitForApi(): Promise<void> {
+    const deadline = Date.now() + 30_000;
+    let lastErr: unknown = null;
+    while (Date.now() < deadline) {
+      try {
+        const res = await fetch(`${API_BASE}/healthz`, { method: "GET" });
+        if (res.ok) return;
+        lastErr = new Error(`healthz returned ${res.status}`);
+      } catch (err) {
+        lastErr = err;
+      }
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    console.error(
+      `[seed] API server must be running on localhost:3001 before seeding staff users. ` +
+        `Run \`npm run --workspace @repo/api dev\` in a second terminal, then retry \`npm run --workspace @repo/db db:seed\`. ` +
+        `Last error: ${String(lastErr)}`,
+    );
+    process.exit(1);
+  }
+
+  await waitForApi();
+
+  const allRestaurants = await prisma.restaurant.findMany({
+    select: { id: true, slug: true, name: true },
+  });
+  let staffCreated = 0;
+  let staffSkipped = 0;
+  for (const r of allRestaurants) {
+    const email = `staff-${r.slug}@demo.guidefoodie.app`;
+
+    // Idempotency: if a user with this email already exists, skip entirely —
+    // don't re-POST to signup (Better Auth would 4xx on duplicate email).
+    const existing = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, role: true, restaurantId: true },
+    });
+    if (existing) {
+      staffSkipped++;
+      continue;
+    }
+
+    // Create the user via Better Auth HTTP signup — hashes password, creates
+    // Account row, respects additionalFields.*.input: false (role defaults to DINER).
+    const signupRes = await fetch(`${API_BASE}/api/auth/sign-up/email`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        email,
+        password: STAFF_PASSWORD,
+        name: `Staff — ${r.name}`,
+      }),
+    });
+    if (!signupRes.ok) {
+      const text = await signupRes.text().catch(() => "<no body>");
+      console.error(`[seed] signup failed for ${email}: ${signupRes.status} ${text}`);
+      process.exit(1);
+    }
+
+    // Lift role + restaurantId via Prisma — D-01 blocks doing this through
+    // the HTTP signup body (additionalFields.role.input: false).
+    await prisma.user.update({
+      where: { email },
+      data: { role: "RESTAURANT_STAFF", restaurantId: r.id },
+    });
+    staffCreated++;
+  }
+  console.log(`[seed] staff users: ${staffCreated} created, ${staffSkipped} already existed`);
+
   await prisma.$disconnect();
 }
 
