@@ -270,6 +270,91 @@ async function main() {
   }
   console.log(`[seed] rewards: ${rewardCreated} created, ${rewardSkipped} already existed`);
 
+  // ─── Phase 3: seed 5 demo souvenirs for diner-demo ──────────────────
+  // Mirrors the awardPoints service (apps/api/src/services/points.ts) but runs
+  // INLINE here — @repo/db cannot import @repo/api (backward workspace dep).
+  // If awardPoints changes, update this block in the same PR.
+  //
+  // NOTE (Rule 1 deviation from plan): plan's michelinSlugs "arpege" /
+  // "mere-brazier" / "georges-blanc" do not match the fixture's actual
+  // city-prefixed slugs; "georges-blanc" is not in the scrape fixture at all.
+  // Substituted with real slugs from tools/scrape/seed-data/restaurants.fallback.json
+  // to satisfy must_haves "mix of BIB/ONE/TWO ratings" across 3 distinct restaurants.
+
+  const POINTS_BY_RATING = { BIB: 50, ONE: 100, TWO: 300, THREE: 1000 } as const;
+
+  const demo = await prisma.user.findUnique({
+    where: { email: "diner-demo@guide-foodie.test" },
+    select: { id: true },
+  });
+  if (!demo) {
+    console.error("[seed] diner-demo@guide-foodie.test missing — user seed block must run first");
+    process.exit(1);
+  }
+
+  const existingSouvenirs = await prisma.souvenir.count({ where: { userId: demo.id } });
+  if (existingSouvenirs === 0) {
+    // Map from michelinSlug → desired souvenir count.
+    // Mix of TWO (Arpège ×2) + ONE (Septime ×2) + BIB (Le Timbre ×1) = 5 souvenirs,
+    // 3 distinct restaurants, 3 distinct rating tiers. Totals: 600+200+50 = 850 pts.
+    const SOUVENIR_FIXTURE: Array<{ michelinSlug: string; count: number; note: string | null }> = [
+      { michelinSlug: "paris/arpege", count: 2, note: "Alain Passage's vegetable garden on a plate — unforgettable." },
+      { michelinSlug: "paris/septime", count: 2, note: "Bertrand Grébaut's seasonal tasting — table #4 every time." },
+      { michelinSlug: "paris/le-timbre", count: 1, note: "Tiny room, huge Bib Gourmand flavor." },
+    ];
+
+    let seedIdx = 0;
+    for (const fx of SOUVENIR_FIXTURE) {
+      const r = await prisma.restaurant.findUnique({
+        where: { michelinSlug: fx.michelinSlug },
+        select: { id: true, michelinRating: true, name: true, city: true, dishes: { select: { id: true }, take: 1 } },
+      });
+      if (!r) {
+        console.error(`[seed] restaurant '${fx.michelinSlug}' missing — run scrape seed first`);
+        process.exit(1);
+      }
+      if (r.dishes.length === 0) {
+        console.error(`[seed] restaurant '${fx.michelinSlug}' has no dishes — dish seed must run first`);
+        process.exit(1);
+      }
+      const dishId = r.dishes[0]!.id;
+      const pointsPerSouvenir = POINTS_BY_RATING[r.michelinRating];
+
+      for (let i = 0; i < fx.count; i++) {
+        seedIdx++;
+        const imageKey = `souvenirs/seed/demo-${seedIdx}.jpg`;
+        await prisma.$transaction(async (tx) => {
+          const s = await tx.souvenir.create({
+            data: {
+              userId: demo.id,
+              restaurantId: r.id,
+              dishId,
+              note: fx.note,
+              imageKey,
+              usedDefaultImage: true,
+              pointsAwarded: pointsPerSouvenir,
+            },
+          });
+          await tx.pointTransaction.create({
+            data: {
+              userId: demo.id,
+              delta: pointsPerSouvenir,
+              source: "SOUVENIR_MINT",
+              souvenirId: s.id,
+            },
+          });
+          await tx.user.update({
+            where: { id: demo.id },
+            data: { totalPoints: { increment: pointsPerSouvenir } },
+          });
+        });
+      }
+    }
+    console.log(`[seed] diner-demo: 5 souvenirs minted across 3 restaurants`);
+  } else {
+    console.log(`[seed] diner-demo: ${existingSouvenirs} souvenirs already exist — skipped`);
+  }
+
   await prisma.$disconnect();
 }
 
