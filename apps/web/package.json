@@ -14,6 +14,7 @@
     "@repo/shared-schemas": "*",
     "@repo/tokens": "*",
     "@serwist/turbopack": "^9.5.7",
+    "better-auth": "^1.6.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.8.0",
