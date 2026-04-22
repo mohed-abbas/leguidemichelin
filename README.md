@@ -84,6 +84,27 @@ See [`docs/MODEL-OWNERSHIP.md`](docs/MODEL-OWNERSHIP.md) for the authoritative P
 | `npm run dev:web`                            | Run Next.js on the host (outside compose)                                |
 | `npm run dev:api`                            | Run Express on the host (outside compose)                                |
 
+## Phase 3 smoke
+
+After `npm run db:seed` against a running api:
+
+```bash
+npm run smoke:phase3
+```
+
+Asserts the full Phase 3 backend end-to-end across 8 assertion groups:
+
+1. All seeded accounts sign in (admin, diner-demo, diner-empty, 2× staff)
+2. ADMIN gate — DINER+STAFF receive 403, ADMIN receives 200 on `/api/admin/stats`
+3. Public restaurants + bbox query + validation error on malformed bbox
+4. Fresh diner has empty souvenirs (`items:[]`, `visitedRestaurantIds:[]`)
+5. POST `/api/souvenirs` with JPEG → 201 + 1000 pts credited + `/api/images/:key` 200 + immutable cache
+6. POST `/api/redeem` with insufficient balance → 409 `insufficient_balance`
+7. Cross-restaurant dish PATCH → 404 (portal isolation guard)
+8. Admin disables a user → 401 `account_disabled`; re-enables for idempotency
+
+Exits non-zero on any regression. Requires api on `:3001` and a freshly-seeded DB.
+
 ## Planning artifacts
 
 The planning repo (UI-SPEC, research synthesis, task splits per teammate, PROJECT overview) lives in a separate **local-only** sibling directory `../hackathon/.planning/` and is NOT pushed to this GitHub remote. Ask Murx for the relevant file if you need it.
@@ -117,17 +138,17 @@ without the API; the ADMIN + per-dev + fixture DINER + STAFF blocks require it.
 
 ### Accounts
 
-| Email                                    | Password         | Role               | Purpose                                                 |
-| ---------------------------------------- | ---------------- | ------------------ | ------------------------------------------------------- |
-| `admin@guide-foodie.test`                | `Admin2026!`     | ADMIN              | Full admin dashboard access                             |
-| `staff-arpege@demo.guidefoodie.app`      | `DemoStaff2026!` | RESTAURANT_STAFF   | Arpège (★★) portal login                                |
-| `staff-la-mere-brazier@demo.guidefoodie.app` | `DemoStaff2026!` | RESTAURANT_STAFF | La Mère Brazier (★★) portal login                       |
-| `staff-septime@demo.guidefoodie.app`     | `DemoStaff2026!` | RESTAURANT_STAFF   | Septime (★) portal login                                |
-| `dev-murx@guide-foodie.test`             | `DevDiner2026!`  | DINER              | Murx's per-dev diner login                              |
-| `dev-ilia@guide-foodie.test`             | `DevDiner2026!`  | DINER              | Ilia's per-dev diner login                              |
-| `dev-wilson@guide-foodie.test`           | `DevDiner2026!`  | DINER              | Wilson's per-dev diner login                            |
-| `diner-empty@guide-foodie.test`          | `Diner2026!`     | DINER              | Empty account — 0 souvenirs, 0 points                   |
-| `diner-demo@guide-foodie.test`           | `Diner2026!`     | DINER              | Demo account — 5 souvenirs across 3 restaurants, 850 pts |
+| Email                                        | Password         | Role             | Purpose                                                  |
+| -------------------------------------------- | ---------------- | ---------------- | -------------------------------------------------------- |
+| `admin@guide-foodie.test`                    | `Admin2026!`     | ADMIN            | Full admin dashboard access                              |
+| `staff-arpege@demo.guidefoodie.app`          | `DemoStaff2026!` | RESTAURANT_STAFF | Arpège (★★) portal login                                 |
+| `staff-la-mere-brazier@demo.guidefoodie.app` | `DemoStaff2026!` | RESTAURANT_STAFF | La Mère Brazier (★★) portal login                        |
+| `staff-septime@demo.guidefoodie.app`         | `DemoStaff2026!` | RESTAURANT_STAFF | Septime (★) portal login                                 |
+| `dev-murx@guide-foodie.test`                 | `DevDiner2026!`  | DINER            | Murx's per-dev diner login                               |
+| `dev-ilia@guide-foodie.test`                 | `DevDiner2026!`  | DINER            | Ilia's per-dev diner login                               |
+| `dev-wilson@guide-foodie.test`               | `DevDiner2026!`  | DINER            | Wilson's per-dev diner login                             |
+| `diner-empty@guide-foodie.test`              | `Diner2026!`     | DINER            | Empty account — 0 souvenirs, 0 points                    |
+| `diner-demo@guide-foodie.test`               | `Diner2026!`     | DINER            | Demo account — 5 souvenirs across 3 restaurants, 850 pts |
 
 > Staff email domain (`@demo.guidefoodie.app`) differs from the other fixtures
 > (`@guide-foodie.test`) because the Phase 2 staff seed used a different
