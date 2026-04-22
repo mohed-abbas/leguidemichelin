@@ -62,6 +62,15 @@ export async function redeemReward(input: RedeemRewardInput) {
       throw new BusinessError("insufficient_balance", 409, `needs ${reward.pointsCost} points`);
     }
 
+    // Guard: each reward can only be redeemed once per user (WR-04).
+    const existing = await tx.redemption.findFirst({
+      where: { userId, rewardId: reward.id },
+      select: { id: true },
+    });
+    if (existing) {
+      throw new BusinessError("already_redeemed", 409, "reward already redeemed");
+    }
+
     const redemption = await tx.redemption.create({
       data: {
         userId,
@@ -80,12 +89,13 @@ export async function redeemReward(input: RedeemRewardInput) {
       },
     });
 
-    // Read the new balance to return in the response
+    // Read the new balance to return in the response (WR-05: guard null).
     const after = await tx.user.findUnique({
       where: { id: userId },
       select: { totalPoints: true },
     });
-    return { redemption, newBalance: after?.totalPoints ?? 0 };
+    if (!after) throw new BusinessError("internal", 500, "could not read updated balance");
+    return { redemption, newBalance: after.totalPoints };
   });
 
   return { redemption: result.redemption, reward, newBalance: result.newBalance };
