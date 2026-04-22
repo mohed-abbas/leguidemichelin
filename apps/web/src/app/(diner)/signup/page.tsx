@@ -43,6 +43,9 @@ export default function SignupPage() {
       return;
     }
     router.replace("/");
+    // Re-fetch server components so the async diner layout picks up the new
+    // session cookie and renders the bottom nav.
+    router.refresh();
   }
 
   return (

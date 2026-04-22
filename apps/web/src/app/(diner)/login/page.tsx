@@ -61,6 +61,10 @@ function LoginForm() {
     const role = (data.user as { role?: string }).role ?? "DINER";
     const next = safeNext(params.get("next"));
     router.replace(next ?? redirectByRole(role));
+    // router.replace alone reuses the RSC payload, so async layouts that
+    // read the session keep serving their unauth branch. router.refresh
+    // re-fetches server components so the bottom nav / sidebar appear.
+    router.refresh();
   }
 
   return (

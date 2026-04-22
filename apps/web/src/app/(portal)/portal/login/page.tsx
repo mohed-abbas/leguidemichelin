@@ -60,6 +60,9 @@ function PortalLoginForm() {
     const role = (data.user as { role?: string }).role ?? "DINER";
     const next = safeNext(params.get("next"));
     router.replace(next ?? redirectByRole(role));
+    // Re-fetch server components so the async portal layout picks up the
+    // new session cookie and renders the sidebar.
+    router.refresh();
   }
 
   return (

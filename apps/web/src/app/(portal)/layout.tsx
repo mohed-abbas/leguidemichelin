@@ -1,8 +1,14 @@
 import { FooterDisclaimer } from "@/components/footer-disclaimer";
 import { PortalSidebar } from "@/components/portal-sidebar";
+import { getServerSession } from "@/lib/get-server-session";
 import type { ReactNode } from "react";
 
-export default function PortalLayout({ children }: { children: ReactNode }) {
+export default async function PortalLayout({ children }: { children: ReactNode }) {
+  const session = await getServerSession();
+  // Hide the portal sidebar on /portal/login where the viewer is
+  // unauthenticated. Proxy role-gate already blocks diners from portal
+  // routes, so any non-staff session here means we're on the login screen.
+  const showSidebar = session?.user.role === "RESTAURANT_STAFF";
   return (
     <div
       style={{
@@ -31,19 +37,21 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "240px 1fr",
+          gridTemplateColumns: showSidebar ? "240px 1fr" : "minmax(0, 1fr)",
         }}
       >
-        <aside
-          style={{
-            background: "var(--color-surface-muted)",
-            borderRight: "1px solid var(--color-border)",
-            minHeight: "100%",
-          }}
-          aria-label="Navigation latérale"
-        >
-          <PortalSidebar />
-        </aside>
+        {showSidebar ? (
+          <aside
+            style={{
+              background: "var(--color-surface-muted)",
+              borderRight: "1px solid var(--color-border)",
+              minHeight: "100%",
+            }}
+            aria-label="Navigation latérale"
+          >
+            <PortalSidebar />
+          </aside>
+        ) : null}
         <main
           id="main"
           role="main"
