@@ -1,3 +1,4 @@
+import { DinerBottomNav } from "@/components/diner-bottom-nav";
 import { FooterDisclaimer } from "@/components/footer-disclaimer";
 import type { ReactNode } from "react";
 
@@ -42,7 +43,7 @@ export default function DinerLayout({ children }: { children: ReactNode }) {
           zIndex: "var(--z-nav)",
         }}
       >
-        {/* Phase 2 fills bottom-nav content */}
+        <DinerBottomNav />
       </nav>
     </div>
   );
