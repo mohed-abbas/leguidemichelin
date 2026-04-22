@@ -1,4 +1,12 @@
-export default function DinerHomePage() {
+import { getServerSession } from "@/lib/get-server-session";
+
+export default async function DinerHomePage() {
+  const session = await getServerSession();
+  const greeting = session?.user ? `Bonjour ${session.user.name} !` : "Guide Foodie Journey";
+  const subCopy = session?.user
+    ? "Scannez un QR restaurant pour créer votre premier souvenir."
+    : "La plateforme arrive bientôt.";
+
   return (
     <div
       style={{
@@ -23,7 +31,7 @@ export default function DinerHomePage() {
           margin: 0,
         }}
       >
-        Guide Foodie Journey
+        {greeting}
       </h1>
       <p
         style={{
@@ -33,7 +41,7 @@ export default function DinerHomePage() {
           margin: 0,
         }}
       >
-        La plateforme arrive bientôt.
+        {subCopy}
       </p>
     </div>
   );
