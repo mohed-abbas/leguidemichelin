@@ -1,6 +1,6 @@
 # Backend Contract (v1 — Phase 3 freeze)
 
-**Last modified SHA:** 5bb355596d819ad359f44167ca60fed23d3b2e95
+**Last modified SHA:** 30dfad43edb23fa11bec9aa9978c726160abe5d8
 **Status:** Frozen — additive-only until Phase 5. Any breaking change requires a Murx-owned PR + team-channel announcement (ROADMAP Parallel Independence Protocol).
 **Audience:** Phase 4 devs (Ilia, Wilson) consuming the API from the web app.
 
@@ -262,14 +262,14 @@ curl -s -b cookies.txt http://localhost:3001/api/portal/qr
 
 #### Restaurants
 
-| Method | Path                              | Role  | Request                                              | Response                                                                                | Errors                                  |
-| ------ | --------------------------------- | ----- | ---------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------- |
-| GET    | `/api/admin/restaurants`          | ADMIN | —                                                    | `AdminRestaurantsListResponse` (`{ items: AdminRestaurantResponse[] }`, incl. disabled) | 401, 403                                |
-| POST   | `/api/admin/restaurants`          | ADMIN | `AdminRestaurantCreate`                              | `AdminRestaurantResponse`                                                               | 400 validation, 401, 403                |
-| GET    | `/api/admin/restaurants/:id`      | ADMIN | —                                                    | `AdminRestaurantResponse`                                                               | 401, 403, 404 not_found                 |
-| PATCH  | `/api/admin/restaurants/:id`      | ADMIN | `AdminRestaurantPatch` (incl. nullable `disabledAt`) | `AdminRestaurantResponse`                                                               | 400 validation, 401, 403, 404 not_found |
-| DELETE | `/api/admin/restaurants/:id`      | ADMIN | —                                                    | `{ success: true }` (soft-disable — sets `disabledAt = now()`)                          | 401, 403, 404 not_found                 |
-| GET    | `/api/admin/restaurants/:id/menu` | ADMIN | —                                                    | `RestaurantMenuResponse`                                                                | 401, 403, 404 not_found                 |
+| Method | Path                              | Role  | Request                                              | Response                                                                                                                                                        | Errors                                  |
+| ------ | --------------------------------- | ----- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| GET    | `/api/admin/restaurants`          | ADMIN | —                                                    | `AdminRestaurantsListResponse` (`{ items: AdminRestaurantResponse[] }`, incl. disabled)                                                                         | 401, 403                                |
+| POST   | `/api/admin/restaurants`          | ADMIN | `AdminRestaurantCreate`                              | `AdminRestaurantResponse`                                                                                                                                       | 400 validation, 401, 403                |
+| GET    | `/api/admin/restaurants/:id`      | ADMIN | —                                                    | `AdminRestaurantResponse`                                                                                                                                       | 401, 403, 404 not_found                 |
+| PATCH  | `/api/admin/restaurants/:id`      | ADMIN | `AdminRestaurantPatch` (incl. nullable `disabledAt`) | `AdminRestaurantResponse`                                                                                                                                       | 400 validation, 401, 403, 404 not_found |
+| DELETE | `/api/admin/restaurants/:id`      | ADMIN | —                                                    | `AdminRestaurantResponse` (soft-disable — sets `disabledAt = now()`; returns updated row so admin UI can render "disabled since …" without a second round-trip) | 401, 403, 404 not_found                 |
+| GET    | `/api/admin/restaurants/:id/menu` | ADMIN | —                                                    | `RestaurantMenuResponse`                                                                                                                                        | 401, 403, 404 not_found                 |
 
 **Soft-delete notes (D-11):**
 
