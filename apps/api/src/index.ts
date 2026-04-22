@@ -7,6 +7,7 @@ import { auth } from "./auth.js";
 import { requireAuth, type AuthedRequest } from "./middleware/auth.js";
 import { errorHandler } from "./middleware/error.js";
 import { imagesRouter } from "./routes/images.js";
+import { restaurantsRouter } from "./routes/restaurants.js";
 
 const app = express();
 const PORT = Number(process.env.API_PORT ?? 3001);
@@ -54,9 +55,9 @@ app.get("/healthz", (_req: Request, res: Response) => {
 // ─── Domain routers ─────────────────────────────────────────────────
 // Order matters only within auth-protected surfaces. /api/images is public.
 app.use("/api/images", imagesRouter);
+app.use("/api/restaurants", restaurantsRouter);
 
-// Future routers (Phase 3 plans 05–09) mount below, before the 404.
-// app.use("/api/restaurants", restaurantsRouter);
+// Future routers (Phase 3 plans 06–09) mount below, before the 404.
 // app.use("/api/souvenirs", souvenirsRouter);
 // app.use("/api/me", meRouter);
 // app.use("/api/rewards", rewardsRouter);
