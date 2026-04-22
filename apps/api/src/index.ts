@@ -4,6 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./auth.js";
+import { requireAuth, type AuthedRequest } from "./middleware/auth.js";
 
 const app = express();
 const PORT = Number(process.env.API_PORT ?? 3001);
@@ -17,11 +18,26 @@ app.use(
   }),
 );
 
+// ─── GET /api/auth/me — Phase 2 D-12 ────────────────────────────────
+// MUST be registered BEFORE the Better Auth splat below.
+// The splat `app.all("/api/auth/*splat")` would otherwise intercept this
+// path and return a Better Auth 404 (BA has no /me handler).
+// This route only reads the session cookie (no body), so it is safe to
+// mount before express.json(); the body-stream threat only affects routes
+// that must parse request bodies (i.e. the Better Auth sign-in/sign-up routes).
+// Used by proxy.ts (via same-origin rewrite) + client auth-client.
+// Response shape: { id, email, role, name, restaurantId }.
+app.get("/api/auth/me", requireAuth, (req: Request, res: Response) => {
+  const { id, email, role, name, restaurantId } = (req as AuthedRequest).user;
+  res.json({ id, email, role, name, restaurantId });
+});
+
 // ─── Better Auth handler (BEFORE express.json — THREAT T-01-AUTH-BYPASS) ───
 //
 //   Better Auth reads the raw request body stream. If express.json() runs
 //   FIRST, the body is already consumed → Better Auth cannot parse it.
-//   DO NOT REORDER THIS — see .planning/phases/01-foundation/01-06-api-better-auth-PLAN.md §threat_model.
+//   DO NOT REORDER THIS vs express.json below — see
+//   .planning/phases/01-foundation/01-06-api-better-auth-PLAN.md §threat_model.
 //
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
