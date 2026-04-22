@@ -49,8 +49,13 @@ echo "$headers" | grep -iE 'Set-Cookie.*httponly' >/dev/null && pass "Set-Cookie
 echo "$headers" | grep -iE 'Set-Cookie.*samesite=lax' >/dev/null && pass "Set-Cookie is SameSite=Lax" || fail "Set-Cookie missing SameSite=Lax"
 # Note: Secure flag only in production; dev over HTTP omits it. Skipping here.
 
-# 5. Sign out
-curl -sS -b "$COOKIE_JAR" -c "$COOKIE_JAR" -X POST "$BASE/api/auth/sign-out" > /dev/null
+# 5. Sign out — Better Auth enforces a CSRF Origin check on sign-out; must send
+# an Origin matching BETTER_AUTH_URL (= $BASE in dev) or it returns 403.
+signout_code=$(curl -sS -o /dev/null -w '%{http_code}' \
+  -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
+  -H 'Content-Type: application/json' -H "Origin: $BASE" \
+  -d '{}' -X POST "$BASE/api/auth/sign-out")
+[[ "$signout_code" == "200" ]] && pass "sign-out returns 200" || fail "sign-out returned $signout_code, expected 200"
 code=$(curl -sS -o /dev/null -w '%{http_code}' -b "$COOKIE_JAR" "$BASE/api/auth/me")
 [[ "$code" == "401" ]] && pass "post-signout /me returns 401" || fail "post-signout /me returned $code, expected 401"
 
