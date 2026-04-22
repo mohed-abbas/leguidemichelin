@@ -10,6 +10,8 @@ import { imagesRouter } from "./routes/images.js";
 import { restaurantsRouter } from "./routes/restaurants.js";
 import { souvenirsRouter } from "./routes/souvenirs.js";
 import { meRouter } from "./routes/me.js";
+import { rewardsRouter } from "./routes/rewards.js";
+import { redeemRouter } from "./routes/redeem.js";
 
 const app = express();
 const PORT = Number(process.env.API_PORT ?? 3001);
@@ -60,10 +62,10 @@ app.use("/api/images", imagesRouter);
 app.use("/api/restaurants", restaurantsRouter);
 app.use("/api/souvenirs", souvenirsRouter);
 app.use("/api/me", meRouter);
+app.use("/api/rewards", rewardsRouter);
+app.use("/api/redeem", redeemRouter);
 
-// Future routers (Phase 3 plans 07–11) mount below, before the 404.
-// app.use("/api/rewards", rewardsRouter);
-// app.use("/api/redeem", redeemRouter);
+// Future routers (Phase 3 plans 08–11) mount below, before the 404.
 // app.use("/api/portal", portalRouter);
 // app.use("/api/admin", adminRouter);
 

@@ -103,3 +103,40 @@ meRouter.get("/points", async (req: Request, res: Response, next: NextFunction) 
     next(err);
   }
 });
+
+/**
+ * GET /api/me/redemptions — newest-first redemption history.
+ * requireAuth already applied at router level (Plan 06).
+ */
+meRouter.get("/redemptions", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = (req as AuthedRequest).user;
+    const rows = await prisma.redemption.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      include: { reward: true },
+    });
+    res.json({
+      items: rows.map((r) => ({
+        id: r.id,
+        userId: r.userId,
+        rewardId: r.rewardId,
+        code: r.code,
+        pointsSpent: r.pointsSpent,
+        reward: {
+          id: r.reward.id,
+          title: r.reward.title,
+          description: r.reward.description,
+          pointsCost: r.reward.pointsCost,
+          imageKey: r.reward.imageKey,
+          active: r.reward.active,
+          createdAt: r.reward.createdAt.toISOString(),
+          updatedAt: r.reward.updatedAt.toISOString(),
+        },
+        createdAt: r.createdAt.toISOString(),
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
