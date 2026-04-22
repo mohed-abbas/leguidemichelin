@@ -1,11 +1,12 @@
 import { getServerSession } from "@/lib/get-server-session";
 
 export default async function DinerHomePage() {
+  // Proxy gates this route: anonymous viewers are redirected to /login,
+  // staff to /portal/menu. Only an authenticated diner can reach here.
   const session = await getServerSession();
-  const greeting = session?.user ? `Bonjour ${session.user.name} !` : "Guide Foodie Journey";
-  const subCopy = session?.user
-    ? "Scannez un QR restaurant pour créer votre premier souvenir."
-    : "La plateforme arrive bientôt.";
+  const name = session?.user.name ?? "";
+  const greeting = `Bonjour ${name} !`;
+  const subCopy = "Scannez un QR restaurant pour créer votre premier souvenir.";
 
   return (
     <div

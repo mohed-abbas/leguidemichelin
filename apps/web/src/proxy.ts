@@ -9,7 +9,6 @@ import { NextResponse, type NextRequest } from "next/server";
  * Array or rename the const, update the awk ranges in the verify block too.
  */
 const PUBLIC_EXACT = new Set<string>([
-  "/",
   "/login",
   "/signup",
   "/portal/login",
