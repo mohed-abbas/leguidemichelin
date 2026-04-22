@@ -58,11 +58,41 @@ services:
       - ./:/workspace:cached
       - node_modules_root:/workspace/node_modules
       - images-dev-data:/var/data/images
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/healthz >/dev/null 2>&1 || exit 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
     depends_on:
       postgres:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+
+  # One-shot: waits for api to be healthy, then runs the idempotent seed.
+  # Seeds restaurants + dishes + ADMIN/STAFF/DINER fixtures + rewards + demo
+  # souvenirs. Safe to re-run on every `compose up` — upserts by unique keys.
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      target: dev
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-foodie}:${POSTGRES_PASSWORD:-foodie}@postgres:5432/${POSTGRES_DB:-foodie}?schema=public
+      SEED_API_BASE: "http://api:3001"
+      BETTER_AUTH_URL: "http://localhost:3000"
+    command: sh -c "npm install --ignore-scripts --no-audit --no-fund && npm run db:seed"
+    volumes:
+      - ./:/workspace:cached
+      - node_modules_root:/workspace/node_modules
+    depends_on:
+      api:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
 
   web:
     build:
