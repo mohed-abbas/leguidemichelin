@@ -52,15 +52,13 @@ adminUsersRouter.get("/", async (_req: Request, res: Response, next: NextFunctio
  *
  * ADMIN-07: self-demote guard. The acting admin cannot touch their own row.
  * Without this guard, the last admin could lock the platform out of admin
- * access. 400 (not 403) because the action is forbidden-by-rule not-by-role —
- * a DIFFERENT admin making this same call would succeed, so it isn't a role
- * problem.
+ * access. Returns 403 (forbidden) — consistent with D-16 HTTP status map.
  */
 adminUsersRouter.patch("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const acting = (req as AuthedRequest).user;
     if (req.params.id === acting.id) {
-      throw new BusinessError("forbidden", 400, "admin cannot modify own role or status");
+      throw new BusinessError("forbidden", 403, "admin cannot modify own role or status");
     }
     const parsed = AdminUserPatch.safeParse(req.body);
     if (!parsed.success) throw new ValidationError(parsed.error);

@@ -289,12 +289,12 @@ curl -s -b cookies.txt http://localhost:3001/api/portal/qr
 
 #### Users
 
-| Method | Path                   | Role  | Request                                   | Response                                                    | Errors                                                  |
-| ------ | ---------------------- | ----- | ----------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------- |
-| GET    | `/api/admin/users`     | ADMIN | —                                         | `AdminUsersListResponse` `{ items: AdminUserRow[], total }` | 401, 403                                                |
-| PATCH  | `/api/admin/users/:id` | ADMIN | `AdminUserPatch` (`role?`, `disabledAt?`) | `AdminUserResponse`                                         | 400 (self-target / validation), 401, 403, 404 not_found |
+| Method | Path                   | Role  | Request                                   | Response                                                    | Errors                                                            |
+| ------ | ---------------------- | ----- | ----------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------- |
+| GET    | `/api/admin/users`     | ADMIN | —                                         | `AdminUsersListResponse` `{ items: AdminUserRow[], total }` | 401, 403                                                          |
+| PATCH  | `/api/admin/users/:id` | ADMIN | `AdminUserPatch` (`role?`, `disabledAt?`) | `AdminUserResponse`                                         | 400 validation, 401, 403 (self-target / forbidden), 404 not_found |
 
-**ADMIN-07 guardrail:** `PATCH /api/admin/users/:id` rejects `id === req.user.id` with `{ "error": "forbidden" }` status 400. Self-demote is blocked (different admin could make the same call successfully — this is a rule, not a role violation).
+**ADMIN-07 guardrail:** `PATCH /api/admin/users/:id` rejects `id === req.user.id` with `{ "error": "forbidden" }` status 403. Self-demote is blocked to prevent an admin from locking the platform out of admin access.
 
 Sample (disable a user):
 
