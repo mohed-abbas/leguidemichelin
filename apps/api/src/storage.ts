@@ -42,6 +42,12 @@ export interface Storage {
    * `/api/images/<key>` path that api's image handler (Phase 4) serves.
    */
   signedUrl(key: string, ttlSeconds: number): Promise<string>;
+
+  /**
+   * Delete a stored object. No-ops silently if the key does not exist
+   * (idempotent — safe to call in error cleanup handlers).
+   */
+  delete(key: string): Promise<void>;
 }
 
 const BASE_DIR = resolve(process.env.STORAGE_DIR ?? "/var/data/images");
@@ -77,9 +83,7 @@ class LocalFsStorage implements Storage {
     return { key: k };
   }
 
-  async get(
-    key: string,
-  ): Promise<{ body: Readable; contentType: string | null }> {
+  async get(key: string): Promise<{ body: Readable; contentType: string | null }> {
     const full = safeResolve(key);
     // Confirm file exists; throws ENOENT if missing.
     await stat(full);
@@ -90,6 +94,16 @@ class LocalFsStorage implements Storage {
     // v1: return the api image-serve path (Phase 4 implements the handler).
     safeResolve(key); // throws on invalid keys
     return `/api/images/${encodeURIComponent(key)}`;
+  }
+
+  async delete(key: string): Promise<void> {
+    const { unlink } = await import("node:fs/promises");
+    try {
+      await unlink(safeResolve(key));
+    } catch (err: unknown) {
+      // ENOENT = file already gone; silently swallow.
+      if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
+    }
   }
 }
 

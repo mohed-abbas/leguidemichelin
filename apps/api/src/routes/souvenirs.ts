@@ -87,12 +87,17 @@ souvenirsRouter.post(
       // Determine image key: uploaded file → process + store; else dish default.
       let imageKey: string;
       let usedDefaultImage: boolean;
+      // Track processed keys so we can clean up on transaction failure (WR-01).
+      let uploadedFullKey: string | null = null;
+      let uploadedThumbKey: string | null = null;
 
       const uploaded = (req as Request & { file?: Express.Multer.File }).file;
       if (uploaded && uploaded.buffer && uploaded.buffer.length > 0) {
         const processed = await processToFullAndThumb(uploaded.buffer);
         await storage.put(processed.fullKey, processed.fullBuffer, { contentType: "image/jpeg" });
         await storage.put(processed.thumbKey, processed.thumbBuffer, { contentType: "image/jpeg" });
+        uploadedFullKey = processed.fullKey;
+        uploadedThumbKey = processed.thumbKey;
         imageKey = processed.fullKey;
         usedDefaultImage = false;
       } else if (dish.defaultImageKey) {
@@ -102,14 +107,22 @@ souvenirsRouter.post(
         throw new BusinessError("validation", 400, "image required (dish has no defaultImageKey)");
       }
 
-      const result = await awardPoints({
-        userId: user.id, // PITFALL #7: session-derived
-        restaurantId: dish.restaurantId,
-        dishId: dish.id,
-        note: note ?? null,
-        imageKey,
-        usedDefaultImage,
-      });
+      let result: Awaited<ReturnType<typeof awardPoints>>;
+      try {
+        result = await awardPoints({
+          userId: user.id, // PITFALL #7: session-derived
+          restaurantId: dish.restaurantId,
+          dishId: dish.id,
+          note: note ?? null,
+          imageKey,
+          usedDefaultImage,
+        });
+      } catch (txErr) {
+        // Transaction failed — delete any files written to disk to avoid orphans.
+        if (uploadedFullKey) await storage.delete(uploadedFullKey).catch(() => {});
+        if (uploadedThumbKey) await storage.delete(uploadedThumbKey).catch(() => {});
+        throw txErr;
+      }
 
       res.status(201).json(toResponse(result.souvenir, result.restaurant, result.dish));
     } catch (err) {
