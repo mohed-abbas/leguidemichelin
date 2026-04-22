@@ -199,6 +199,56 @@ async function main() {
   }
   console.log(`[seed] staff users: ${staffCreated} created, ${staffSkipped} already existed`);
 
+  // ─── Phase 3 D-10: seed ADMIN + per-dev + fixture DINER accounts ────
+  // Same pattern as the staff loop above: HTTP signup (Better Auth hashes the
+  // password and respects additionalFields.*.input: false → every new user is
+  // a DINER by default), then an optional Prisma lift for ADMIN.
+
+  const ADMIN_PASSWORD = "Admin2026!";
+  const DEV_DINER_PASSWORD = "DevDiner2026!";
+  const FIXTURE_DINER_PASSWORD = "Diner2026!";
+
+  interface SeedUser {
+    email: string;
+    name: string;
+    password: string;
+    role: "ADMIN" | "DINER";
+  }
+
+  const seedUsers: SeedUser[] = [
+    { email: "admin@guide-foodie.test", name: "Guide Foodie Admin", password: ADMIN_PASSWORD, role: "ADMIN" },
+    { email: "dev-murx@guide-foodie.test", name: "Murx (dev)", password: DEV_DINER_PASSWORD, role: "DINER" },
+    { email: "dev-ilia@guide-foodie.test", name: "Ilia (dev)", password: DEV_DINER_PASSWORD, role: "DINER" },
+    { email: "dev-wilson@guide-foodie.test", name: "Wilson (dev)", password: DEV_DINER_PASSWORD, role: "DINER" },
+    { email: "diner-empty@guide-foodie.test", name: "Empty Diner", password: FIXTURE_DINER_PASSWORD, role: "DINER" },
+    { email: "diner-demo@guide-foodie.test", name: "Demo Diner", password: FIXTURE_DINER_PASSWORD, role: "DINER" },
+  ];
+
+  let userCreated = 0;
+  let userSkipped = 0;
+  for (const u of seedUsers) {
+    const existing = await prisma.user.findUnique({ where: { email: u.email }, select: { id: true } });
+    if (existing) {
+      userSkipped++;
+      continue;
+    }
+    const res = await fetch(`${API_BASE}/api/auth/sign-up/email`, {
+      method: "POST",
+      headers: { "content-type": "application/json", origin: SEED_ORIGIN },
+      body: JSON.stringify({ email: u.email, password: u.password, name: u.name }),
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "<no body>");
+      console.error(`[seed] signup failed for ${u.email}: ${res.status} ${text}`);
+      process.exit(1);
+    }
+    if (u.role === "ADMIN") {
+      await prisma.user.update({ where: { email: u.email }, data: { role: "ADMIN" } });
+    }
+    userCreated++;
+  }
+  console.log(`[seed] users (admin+dev+fixture): ${userCreated} created, ${userSkipped} already existed`);
+
   await prisma.$disconnect();
 }
 
