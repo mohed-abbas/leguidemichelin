@@ -249,6 +249,27 @@ async function main() {
   }
   console.log(`[seed] users (admin+dev+fixture): ${userCreated} created, ${userSkipped} already existed`);
 
+  // ─── Phase 3: seed mocked Rewards ───────────────────────────────────
+  const REWARDS_FIXTURE = [
+    { title: "Priority booking", description: "Skip the reservation queue at a partner restaurant (demo only).", pointsCost: 500 },
+    { title: "Champagne pairing", description: "One complimentary glass pairing on your next visit (demo only).", pointsCost: 750 },
+    { title: "Chef's signature dish", description: "A signature dish from the chef's seasonal menu (demo only).", pointsCost: 1000 },
+    { title: "Tasting menu credit", description: "Credit toward a tasting menu at a partner restaurant (demo only).", pointsCost: 2000 },
+  ];
+
+  let rewardCreated = 0;
+  let rewardSkipped = 0;
+  for (const r of REWARDS_FIXTURE) {
+    const existing = await prisma.reward.findFirst({ where: { title: r.title }, select: { id: true } });
+    if (existing) {
+      rewardSkipped++;
+      continue;
+    }
+    await prisma.reward.create({ data: { ...r, active: true } });
+    rewardCreated++;
+  }
+  console.log(`[seed] rewards: ${rewardCreated} created, ${rewardSkipped} already existed`);
+
   await prisma.$disconnect();
 }
 
