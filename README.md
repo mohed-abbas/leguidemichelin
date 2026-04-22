@@ -94,6 +94,45 @@ The planning repo (UI-SPEC, research synthesis, task splits per teammate, PROJEC
 - Wilson task list — `../hackathon/.planning/team/WILSON-TASKS.md`
 - Project overview — `../hackathon/.planning/PROJECT.md`
 
+## Demo Credentials (Phase 2+)
+
+### Seed order (IMPORTANT)
+
+The staff-user seed calls the API's Better Auth HTTP endpoint for password
+hashing, so the API server MUST be running before `db:seed`:
+
+```bash
+# Terminal 1 — start the API (leave it running)
+npm run --workspace @repo/api dev
+
+# Terminal 2 — once the API logs "[api] listening on :3001", seed:
+npm run --workspace @repo/db db:seed
+```
+
+If the API is not reachable on `http://localhost:3001` within 30 seconds, the
+seed fails with a clear error pointing here. Restaurant + dish seeding works
+without the API; only the STAFF user block requires it.
+
+### Restaurant staff (role: `RESTAURANT_STAFF`)
+
+| Email                               | Password         | Restaurant                                                           |
+| ----------------------------------- | ---------------- | -------------------------------------------------------------------- |
+| `staff-<slug>@demo.guidefoodie.app` | `DemoStaff2026!` | every seeded restaurant gets one (see seed output for the full list) |
+
+Example: if a seeded restaurant has slug `arpege`, the staff email is
+`staff-arpege@demo.guidefoodie.app`. Log in at `/portal/login`.
+
+### Diner accounts
+
+Sign up freely at `/signup`. All new signups are `role: DINER` per CONTEXT.md D-01
+(public signup cannot claim a role — `additionalFields.role.input: false` in Better Auth).
+
+### Demo password note
+
+`DemoStaff2026!` is a **demo-only** password committed to the repo for judging
+convenience. Production deploys (Phase 6) MUST rotate via a separate seed run
+with `STAFF_PASSWORD` sourced from env.
+
 ## License
 
 Educational hackathon project. Not affiliated with Le Guide Michelin.
