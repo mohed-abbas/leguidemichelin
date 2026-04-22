@@ -5,9 +5,10 @@
  *   - Ilia owns this package in Phase 2+.
  *   - Server endpoints (apps/api) and client forms (apps/web + react-hook-form)
  *     validate from a single source of truth.
- *
- * Phase 1 ships the package skeleton only; no schemas yet.
  */
 
 // Re-export zod so consumers import `z` from @repo/shared-schemas for consistency.
 export { z } from "zod";
+
+// Phase 2 — auth DTOs (D-18)
+export * from "./auth.js";
