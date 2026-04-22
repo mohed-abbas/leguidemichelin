@@ -61,7 +61,9 @@ export async function processToFullAndThumb(buffer: Buffer): Promise<ProcessedIm
       .rotate() // apply EXIF orientation first
       .resize(2048, 2048, { fit: "inside", withoutEnlargement: true })
       .jpeg({ quality: 82, mozjpeg: false })
-      .withMetadata({}) // strip all metadata (EXIF, IPTC, XMP, GPS)
+      // Do NOT call .withMetadata() — omitting it is the sharp idiom for
+      // stripping all metadata (EXIF, IPTC, XMP, GPS). Calling .withMetadata({})
+      // is the retain-metadata API with an empty partial, which is incorrect.
       .toBuffer();
 
     // Thumb — independent pipeline from the same source buffer
@@ -70,7 +72,7 @@ export async function processToFullAndThumb(buffer: Buffer): Promise<ProcessedIm
       .rotate()
       .resize(256, 256, { fit: "cover" })
       .jpeg({ quality: 80, mozjpeg: false })
-      .withMetadata({})
+      // Omitting .withMetadata() strips all metadata by default (see full pipeline note above).
       .toBuffer();
 
     return { fullKey, thumbKey, fullBuffer, thumbBuffer };
