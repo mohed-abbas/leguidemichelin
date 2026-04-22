@@ -1,4 +1,5 @@
 import { FooterDisclaimer } from "@/components/footer-disclaimer";
+import { PortalSidebar } from "@/components/portal-sidebar";
 import type { ReactNode } from "react";
 
 export default function PortalLayout({ children }: { children: ReactNode }) {
@@ -40,7 +41,9 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
             minHeight: "100%",
           }}
           aria-label="Navigation latérale"
-        />
+        >
+          <PortalSidebar />
+        </aside>
         <main
           id="main"
           role="main"
