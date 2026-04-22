@@ -13,27 +13,28 @@ datasource db {
 
 model User {
   id            String   @id @default(cuid())
-  name          String                                  // Better Auth required
-  email         String   @unique                        // Better Auth required
-  emailVerified Boolean  @default(false)                // Better Auth required
-  image         String?                                 // Better Auth required
+  name          String // Better Auth required
+  email         String   @unique // Better Auth required
+  emailVerified Boolean  @default(false) // Better Auth required
+  image         String? // Better Auth required
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   // Custom fields (declared in Better Auth user.additionalFields)
-  role         UserRole @default(DINER)
-  totalPoints  Int      @default(0)
+  role         UserRole    @default(DINER)
+  totalPoints  Int         @default(0)
   restaurantId String?
   restaurant   Restaurant? @relation(fields: [restaurantId], references: [id])
+  disabledAt   DateTime? // D-06: null = active; admin soft-disable
 
   // Better Auth relations
   sessions Session[]
   accounts Account[]
 
   // Domain relations
-  souvenirs    Souvenir[]
-  pointTxns    PointTransaction[]
-  redemptions  Redemption[]
+  souvenirs   Souvenir[]
+  pointTxns   PointTransaction[]
+  redemptions Redemption[]
 
   @@map("user")
 }
@@ -64,7 +65,7 @@ model Account {
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
   scope                 String?
-  password              String?                         // email/password credential
+  password              String? // email/password credential
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -106,8 +107,8 @@ enum PointSource {
 
 model Restaurant {
   id             String         @id @default(cuid())
-  michelinSlug   String         @unique                // stable key for scrape upsert
-  slug           String         @unique                // SEO-friendly
+  michelinSlug   String         @unique // stable key for scrape upsert
+  slug           String         @unique // SEO-friendly
   name           String
   city           String
   address        String
@@ -115,29 +116,31 @@ model Restaurant {
   lng            Decimal        @db.Decimal(9, 6)
   michelinRating MichelinRating
   cuisine        String?
-  heroImageKey   String?                               // storage.ts opaque key
+  heroImageKey   String? // storage.ts opaque key
+  disabledAt     DateTime? // D-06: null = visible publicly; non-null = admin-only
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
   dishes    Dish[]
   souvenirs Souvenir[]
-  staff     User[]                                     // staff-per-restaurant 1:N
+  staff     User[] // staff-per-restaurant 1:N
 
   @@index([city])
   @@index([michelinRating])
+  @@index([lat, lng]) // Phase 3: bbox map query
 }
 
 model Dish {
-  id              String   @id @default(cuid())
+  id              String     @id @default(cuid())
   restaurantId    String
   restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   name            String
   description     String?
-  priceCents      Int                                  // D-05: Int cents
-  defaultImageKey String?                              // storage.ts opaque key
-  sortOrder       Int      @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  priceCents      Int // D-05: Int cents
+  defaultImageKey String? // storage.ts opaque key
+  sortOrder       Int        @default(0)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
   souvenirs Souvenir[]
 
@@ -145,20 +148,20 @@ model Dish {
 }
 
 model Souvenir {
-  id               String   @id @default(cuid())
+  id               String     @id @default(cuid())
   userId           String
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  restaurantId    String
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurantId     String
   restaurant       Restaurant @relation(fields: [restaurantId], references: [id])
   dishId           String
-  dish             Dish     @relation(fields: [dishId], references: [id])
-  note             String?                             // ≤280 chars enforced by Zod
-  imageKey         String                              // storage.ts opaque key
-  usedDefaultImage Boolean  @default(false)
+  dish             Dish       @relation(fields: [dishId], references: [id])
+  note             String? // ≤280 chars enforced by Zod
+  imageKey         String // storage.ts opaque key
+  usedDefaultImage Boolean    @default(false)
   pointsAwarded    Int
-  createdAt        DateTime @default(now())
+  createdAt        DateTime   @default(now())
 
-  pointTransactions PointTransaction[]                 // back-relation from ledger
+  pointTransactions PointTransaction[] // back-relation from ledger
 
   @@index([userId, createdAt])
   @@index([restaurantId])
@@ -168,7 +171,7 @@ model PointTransaction {
   id           String      @id @default(cuid())
   userId       String
   user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  delta        Int                                     // +mint, -redemption
+  delta        Int // +mint, -redemption
   source       PointSource
   souvenirId   String?
   souvenir     Souvenir?   @relation(fields: [souvenirId], references: [id])
@@ -180,14 +183,14 @@ model PointTransaction {
 }
 
 model Reward {
-  id           String   @id @default(cuid())
-  title        String
-  description  String?
-  pointsCost   Int
-  imageKey     String?
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  pointsCost  Int
+  imageKey    String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   redemptions Redemption[]
 }
@@ -198,11 +201,11 @@ model Redemption {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   rewardId    String
   reward      Reward   @relation(fields: [rewardId], references: [id])
-  code        String   @unique                        // mock code
+  code        String   @unique // mock code
   pointsSpent Int
   createdAt   DateTime @default(now())
 
-  pointTransactions PointTransaction[]                // back-relation
+  pointTransactions PointTransaction[] // back-relation
 
   @@index([userId, createdAt])
 }
