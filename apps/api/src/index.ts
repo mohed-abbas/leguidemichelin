@@ -15,6 +15,15 @@ import { redeemRouter } from "./routes/redeem.js";
 import { portalRouter } from "./routes/portal.js";
 import { adminRouter } from "./routes/admin/index.js";
 
+// ─── Production secret guard (CR-01) ────────────────────────────────
+// The dev fallback in auth.ts is intentional (zero-config local boot).
+// This assertion prevents a silent security hole if the server is
+// deployed to production without BETTER_AUTH_SECRET set.
+if (process.env.NODE_ENV === "production" && !process.env.BETTER_AUTH_SECRET) {
+  console.error("FATAL: BETTER_AUTH_SECRET must be set in production");
+  process.exit(1);
+}
+
 const app = express();
 const PORT = Number(process.env.API_PORT ?? 3001);
 
