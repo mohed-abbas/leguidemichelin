@@ -43,7 +43,15 @@ interface SessionResponse {
   session?: { id: string; expiresAt: string } | null;
 }
 
-async function fetchSession(cookie: string): Promise<NonNullable<SessionResponse["user"]> | null> {
+/**
+ * Result of the server-side session probe.
+ *   - `user`      : the session subject, or null if unauthenticated/disabled
+ *   - `disabled`  : true iff the server explicitly returned 401 account_disabled
+ *                   (so the /login redirect can surface a toast hint)
+ */
+type SessionProbe = { user: NonNullable<SessionResponse["user"]> | null; disabled: boolean };
+
+async function fetchSession(cookie: string): Promise<SessionProbe> {
   const base = process.env.API_INTERNAL_URL ?? "http://localhost:3001";
   try {
     const res = await fetch(`${base}/api/auth/get-session`, {
@@ -51,11 +59,22 @@ async function fetchSession(cookie: string): Promise<NonNullable<SessionResponse
       headers: { cookie },
       cache: "no-store",
     });
-    if (!res.ok) return null;
+    if (res.status === 401) {
+      // Distinguish account_disabled vs unauthenticated by response body shape.
+      // Better Auth's get-session returns 200 with user:null for unauth users,
+      // but our custom endpoints return 401 { error: 'account_disabled' } from
+      // requireAuth. The get-session endpoint itself is Better-Auth-owned, so
+      // a 401 from it is ONLY cookie-expiry-style; disabled users are detected
+      // on the first protected request. For proxy.ts, treat any 401 as unauth
+      // without the reason hint. The reason-hint flow is triggered when a
+      // protected route 401s with account_disabled later in the lifecycle.
+      return { user: null, disabled: false };
+    }
+    if (!res.ok) return { user: null, disabled: false };
     const data = (await res.json()) as SessionResponse | null;
-    return data?.user ?? null;
+    return { user: data?.user ?? null, disabled: false };
   } catch {
-    return null;
+    return { user: null, disabled: false };
   }
 }
 
@@ -63,6 +82,14 @@ async function fetchSession(cookie: string): Promise<NonNullable<SessionResponse
  * Next 16 proxy (renamed from middleware.ts — D-08).
  *
  * UX authority only. Express requireRole remains the security boundary.
+ *
+ * Role-gate order (D-02 Phase 3):
+ *   1. Public allowlist bypass
+ *   2. Unauthenticated → /login or /portal/login redirect
+ *   3. ADMIN hitting anything not under /admin/* → /admin/dashboard (D-02 silo)
+ *   4. RESTAURANT_STAFF hitting /portal/* → passthrough; hitting diner → /portal/menu
+ *   5. DINER hitting /portal/* → /
+ *   6. Otherwise passthrough
  */
 export async function proxy(req: NextRequest): Promise<NextResponse> {
   const { pathname, search } = req.nextUrl;
@@ -72,7 +99,8 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
   }
 
   const cookie = req.headers.get("cookie") ?? "";
-  const user = await fetchSession(cookie);
+  const probe = await fetchSession(cookie);
+  const user = probe.user;
 
   // Unauthenticated → redirect to appropriate login with ?next=
   if (!user) {
@@ -80,11 +108,29 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
     const nextParam = encodeURIComponent(`${pathname}${search}`);
     const url = req.nextUrl.clone();
     url.pathname = loginPath;
-    url.search = `?next=${nextParam}`;
+    url.search = probe.disabled
+      ? `?next=${nextParam}&reason=account_disabled`
+      : `?next=${nextParam}`;
     return NextResponse.redirect(url, 307);
   }
 
-  // Role gate (D-11)
+  // ADMIN silo (D-02 Phase 3) — fires BEFORE portal/staff branches.
+  const isAdminPath = pathname.startsWith("/admin");
+  if (user.role === "ADMIN" && !isAdminPath) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/admin/dashboard";
+    url.search = "";
+    return NextResponse.redirect(url, 307);
+  }
+  // Non-ADMIN on /admin/* → send to their home
+  if (isAdminPath && user.role !== "ADMIN") {
+    const url = req.nextUrl.clone();
+    url.pathname = user.role === "RESTAURANT_STAFF" ? "/portal/menu" : "/";
+    url.search = "";
+    return NextResponse.redirect(url, 307);
+  }
+
+  // Role gate (D-11, Phase 2 preserved)
   const isPortalPath = pathname.startsWith("/portal");
   if (isPortalPath && user.role !== "RESTAURANT_STAFF") {
     const url = req.nextUrl.clone();
@@ -92,7 +138,7 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
     url.search = "";
     return NextResponse.redirect(url, 307);
   }
-  if (!isPortalPath && user.role === "RESTAURANT_STAFF") {
+  if (!isPortalPath && !isAdminPath && user.role === "RESTAURANT_STAFF") {
     // Diner-only protected route, staff user → send to portal home
     const url = req.nextUrl.clone();
     url.pathname = "/portal/menu";
@@ -108,8 +154,5 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
  * itself re-checks via isPublic(), but trimming matcher cuts overhead.
  */
 export const config = {
-  matcher: [
-    // Run on all paths except obvious Next internals + public folder assets.
-    "/((?!_next/static|_next/image|favicon.ico|icons/|manifest.webmanifest|sw.js).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icons/|manifest.webmanifest|sw.js).*)"],
 };
