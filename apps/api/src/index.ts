@@ -13,6 +13,7 @@ import { meRouter } from "./routes/me.js";
 import { rewardsRouter } from "./routes/rewards.js";
 import { redeemRouter } from "./routes/redeem.js";
 import { portalRouter } from "./routes/portal.js";
+import { adminRouter } from "./routes/admin/index.js";
 
 const app = express();
 const PORT = Number(process.env.API_PORT ?? 3001);
@@ -66,9 +67,9 @@ app.use("/api/me", meRouter);
 app.use("/api/rewards", rewardsRouter);
 app.use("/api/redeem", redeemRouter);
 app.use("/api/portal", portalRouter);
+app.use("/api/admin", adminRouter);
 
-// Future routers (Phase 3 plans 09–11) mount below, before the 404.
-// app.use("/api/admin", adminRouter);
+// Future routers (Phase 3 plans 10–11) mount below, before the 404.
 
 // ─── 404 (catch-all for unrouted paths) ─────────────────────────────
 app.use((_req: Request, res: Response) => res.status(404).json({ error: "not_found" }));
