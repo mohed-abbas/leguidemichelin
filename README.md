@@ -94,12 +94,14 @@ The planning repo (UI-SPEC, research synthesis, task splits per teammate, PROJEC
 - Wilson task list — `../hackathon/.planning/team/WILSON-TASKS.md`
 - Project overview — `../hackathon/.planning/PROJECT.md`
 
-## Demo Credentials (Phase 2+)
+## Demo Credentials
+
+These accounts are created by `npm run db:seed` against the dev DB. **Dev-only — never reuse in production.**
 
 ### Seed order (IMPORTANT)
 
-The staff-user seed calls the API's Better Auth HTTP endpoint for password
-hashing, so the API server MUST be running before `db:seed`:
+The seed calls the API's Better Auth HTTP endpoint for password hashing, so the
+API server MUST be running before `db:seed`:
 
 ```bash
 # Terminal 1 — start the API (leave it running)
@@ -111,27 +113,38 @@ npm run --workspace @repo/db db:seed
 
 If the API is not reachable on `http://localhost:3001` within 30 seconds, the
 seed fails with a clear error pointing here. Restaurant + dish seeding works
-without the API; only the STAFF user block requires it.
+without the API; the ADMIN + per-dev + fixture DINER + STAFF blocks require it.
 
-### Restaurant staff (role: `RESTAURANT_STAFF`)
+### Accounts
 
-| Email                               | Password         | Restaurant                                                           |
-| ----------------------------------- | ---------------- | -------------------------------------------------------------------- |
-| `staff-<slug>@demo.guidefoodie.app` | `DemoStaff2026!` | every seeded restaurant gets one (see seed output for the full list) |
+| Email                                    | Password         | Role               | Purpose                                                 |
+| ---------------------------------------- | ---------------- | ------------------ | ------------------------------------------------------- |
+| `admin@guide-foodie.test`                | `Admin2026!`     | ADMIN              | Full admin dashboard access                             |
+| `staff-arpege@demo.guidefoodie.app`      | `DemoStaff2026!` | RESTAURANT_STAFF   | Arpège (★★) portal login                                |
+| `staff-la-mere-brazier@demo.guidefoodie.app` | `DemoStaff2026!` | RESTAURANT_STAFF | La Mère Brazier (★★) portal login                       |
+| `staff-septime@demo.guidefoodie.app`     | `DemoStaff2026!` | RESTAURANT_STAFF   | Septime (★) portal login                                |
+| `dev-murx@guide-foodie.test`             | `DevDiner2026!`  | DINER              | Murx's per-dev diner login                              |
+| `dev-ilia@guide-foodie.test`             | `DevDiner2026!`  | DINER              | Ilia's per-dev diner login                              |
+| `dev-wilson@guide-foodie.test`           | `DevDiner2026!`  | DINER              | Wilson's per-dev diner login                            |
+| `diner-empty@guide-foodie.test`          | `Diner2026!`     | DINER              | Empty account — 0 souvenirs, 0 points                   |
+| `diner-demo@guide-foodie.test`           | `Diner2026!`     | DINER              | Demo account — 5 souvenirs across 3 restaurants, 850 pts |
 
-Example: if a seeded restaurant has slug `arpege`, the staff email is
-`staff-arpege@demo.guidefoodie.app`. Log in at `/portal/login`.
+> Staff email domain (`@demo.guidefoodie.app`) differs from the other fixtures
+> (`@guide-foodie.test`) because the Phase 2 staff seed used a different
+> convention — preserved for idempotency. A staff user is seeded for **every**
+> restaurant in the scrape fixture (not just the three shown above); run
+> `npm run db:seed` and check the console output for the complete list.
 
-### Diner accounts
+### Public signups
 
 Sign up freely at `/signup`. All new signups are `role: DINER` per CONTEXT.md D-01
 (public signup cannot claim a role — `additionalFields.role.input: false` in Better Auth).
 
 ### Demo password note
 
-`DemoStaff2026!` is a **demo-only** password committed to the repo for judging
-convenience. Production deploys (Phase 6) MUST rotate via a separate seed run
-with `STAFF_PASSWORD` sourced from env.
+The passwords above are **demo-only** — committed to the repo for judging convenience.
+Production deploys (Phase 6) MUST rotate via a separate seed run with all passwords
+sourced from env (`STAFF_PASSWORD`, `ADMIN_PASSWORD`, etc.).
 
 ## License
 
