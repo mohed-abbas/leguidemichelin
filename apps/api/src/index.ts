@@ -8,6 +8,8 @@ import { requireAuth, type AuthedRequest } from "./middleware/auth.js";
 import { errorHandler } from "./middleware/error.js";
 import { imagesRouter } from "./routes/images.js";
 import { restaurantsRouter } from "./routes/restaurants.js";
+import { souvenirsRouter } from "./routes/souvenirs.js";
+import { meRouter } from "./routes/me.js";
 
 const app = express();
 const PORT = Number(process.env.API_PORT ?? 3001);
@@ -56,10 +58,10 @@ app.get("/healthz", (_req: Request, res: Response) => {
 // Order matters only within auth-protected surfaces. /api/images is public.
 app.use("/api/images", imagesRouter);
 app.use("/api/restaurants", restaurantsRouter);
+app.use("/api/souvenirs", souvenirsRouter);
+app.use("/api/me", meRouter);
 
-// Future routers (Phase 3 plans 06–09) mount below, before the 404.
-// app.use("/api/souvenirs", souvenirsRouter);
-// app.use("/api/me", meRouter);
+// Future routers (Phase 3 plans 07–11) mount below, before the 404.
 // app.use("/api/rewards", rewardsRouter);
 // app.use("/api/redeem", redeemRouter);
 // app.use("/api/portal", portalRouter);
