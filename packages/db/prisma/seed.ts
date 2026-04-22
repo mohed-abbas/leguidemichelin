@@ -120,6 +120,10 @@ async function main() {
   // See guide-dev/README.md "Demo Credentials" for the required run order.
 
   const API_BASE = process.env.SEED_API_BASE ?? "http://localhost:3001";
+  // Better Auth rejects requests with a null Origin (403 MISSING_OR_NULL_ORIGIN).
+  // Node's fetch omits Origin by default for server-to-server calls, so we set
+  // one that matches BETTER_AUTH_URL (the only trusted origin).
+  const SEED_ORIGIN = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
   const STAFF_PASSWORD = "DemoStaff2026!"; // documented in guide-dev/README.md
 
   // Pre-flight: wait up to 30s for /healthz. Fail fast with a clear message.
@@ -169,7 +173,10 @@ async function main() {
     // Account row, respects additionalFields.*.input: false (role defaults to DINER).
     const signupRes = await fetch(`${API_BASE}/api/auth/sign-up/email`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        origin: SEED_ORIGIN,
+      },
       body: JSON.stringify({
         email,
         password: STAFF_PASSWORD,
