@@ -45,6 +45,9 @@ tools/scrape/.cache/
 # Per-dev task briefs (ILIA-TASKS.md, MURX-TASKS.md, WILSON-TASKS.md, etc.)
 *-TASKS.md
 
+# Local-only manual test matrix (not committed)
+scripts/admin-test-matrix.md
+
 # Ad-hoc screenshots / debug artifacts left at repo root
 /phase-*.png
 /screenshot-*.png
