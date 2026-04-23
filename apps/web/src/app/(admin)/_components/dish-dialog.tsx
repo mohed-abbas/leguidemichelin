@@ -21,7 +21,15 @@ import { surfaceApiError } from "./error-toast";
 const FormSchema = z.object({
   name: z.string().min(1, "Nom requis").max(160),
   description: z.string().max(400).optional(),
-  priceEuros: z.number().min(0).max(10000),
+  // Clamp to 2 decimals — price stored as integer cents server-side.
+  // Allowing unlimited decimal precision silently rounds on submit (L-06).
+  priceEuros: z
+    .number()
+    .min(0)
+    .max(10000)
+    .refine((v) => Math.round(v * 100) === v * 100, {
+      message: "Maximum 2 décimales (centimes)",
+    }),
   sortOrder: z.number().int().min(0).max(99999),
 });
 type FormValues = z.infer<typeof FormSchema>;
