@@ -205,10 +205,15 @@ export function SouvenirRevealClient({ souvenir }: SouvenirRevealClientProps) {
             marginTop: "var(--space-xl)",
           }}
         >
-          <Button style={{ flex: 1 }} render={<Link href="/collection" />}>
+          <Button style={{ flex: 1 }} nativeButton={false} render={<Link href="/collection" />}>
             Voir ma collection
           </Button>
-          <Button variant="outline" style={{ flex: 1 }} render={<Link href="/scan" />}>
+          <Button
+            variant="outline"
+            style={{ flex: 1 }}
+            nativeButton={false}
+            render={<Link href="/scan" />}
+          >
             Scanner à nouveau
           </Button>
         </div>

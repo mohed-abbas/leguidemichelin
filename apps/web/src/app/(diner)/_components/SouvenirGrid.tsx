@@ -89,7 +89,7 @@ function EmptyState() {
           Scannez un QR code dans un restaurant étoilé pour créer le premier.
         </p>
       </div>
-      <Button render={<Link href="/scan">Scanner maintenant</Link>} />
+      <Button nativeButton={false} render={<Link href="/scan">Scanner maintenant</Link>} />
     </div>
   );
 }

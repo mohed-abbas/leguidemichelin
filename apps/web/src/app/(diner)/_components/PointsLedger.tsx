@@ -81,7 +81,7 @@ export function PointsLedger({ balance, entries }: PointsLedgerProps) {
         <p style={{ margin: 0, maxWidth: "28ch" }}>
           Votre historique est vide. Créez votre premier souvenir pour gagner des points.
         </p>
-        <Button render={<Link href="/scan">Scanner</Link>} />
+        <Button nativeButton={false} render={<Link href="/scan">Scanner</Link>} />
       </section>
     );
   }
