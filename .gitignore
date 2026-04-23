@@ -41,6 +41,17 @@ Thumbs.db
 playwright-report/
 test-results/
 tools/scrape/.cache/
+.playwright-mcp/
 
 # Images written at runtime by storage.ts (Phase 4+); never commit
 /var/data/images/
+
+# Per-dev task briefs (ILIA-TASKS.md, MURX-TASKS.md, WILSON-TASKS.md, etc.)
+*-TASKS.md
+
+# Local-only manual test matrix (not committed)
+scripts/admin-test-matrix.md
+
+# Ad-hoc screenshots / debug artifacts left at repo root
+/phase-*.png
+/screenshot-*.png
