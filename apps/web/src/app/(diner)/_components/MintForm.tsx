@@ -22,7 +22,7 @@
  */
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Star } from "lucide-react";
@@ -101,6 +101,14 @@ export function MintForm({ restaurant, menu }: MintFormProps) {
   const dishId = form.watch("dishId");
   const isSubmitting = form.formState.isSubmitting;
   const hasDishes = menu.dishes.length > 0;
+
+  // Revoke the blob URL on unmount (or when a new preview replaces it) so
+  // the last-selected photo does not leak for the rest of the tab's lifetime.
+  useEffect(() => {
+    return () => {
+      if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    };
+  }, [photoPreviewUrl]);
 
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0] ?? null;
