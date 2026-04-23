@@ -1,0 +1,67 @@
+import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
+import { FooterDisclaimer } from "@/components/footer-disclaimer";
+import { getServerSession } from "@/lib/get-server-session";
+import { AdminSidebar } from "./_components/admin-sidebar";
+
+export default async function AdminLayout({ children }: { children: ReactNode }) {
+  const session = await getServerSession();
+  if (!session || session.user.role !== "ADMIN") {
+    redirect("/login");
+  }
+
+  return (
+    <div
+      style={{
+        minHeight: "100dvh",
+        background: "var(--color-bg)",
+        display: "grid",
+        gridTemplateColumns: "minmax(0, 1fr)",
+        gridTemplateRows: "64px 1fr auto",
+      }}
+    >
+      <header
+        role="banner"
+        style={{
+          height: "64px",
+          background: "var(--color-surface)",
+          borderBottom: "1px solid var(--color-border)",
+          display: "flex",
+          alignItems: "center",
+          paddingInline: "var(--space-xl)",
+          fontWeight: "var(--font-weight-semibold)",
+          zIndex: "var(--z-nav)",
+        }}
+      >
+        Guide Foodie Journey — Administration
+      </header>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "240px 1fr",
+        }}
+      >
+        <aside
+          aria-label="Navigation latérale"
+          style={{
+            background: "var(--color-surface-muted)",
+            borderRight: "1px solid var(--color-border)",
+            minHeight: "100%",
+          }}
+        >
+          <AdminSidebar />
+        </aside>
+        <main
+          id="main"
+          role="main"
+          style={{
+            padding: "var(--space-xl)",
+          }}
+        >
+          {children}
+          <FooterDisclaimer align="left" />
+        </main>
+      </div>
+    </div>
+  );
+}
