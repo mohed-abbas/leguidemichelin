@@ -126,6 +126,13 @@ export function MapPreview({ className, heightPx = DEFAULT_HEIGHT }: MapPreviewP
       }
     };
 
+    if (!navigator.geolocation) {
+      // Feature unavailable (older WebView / privacy-hardened browser) —
+      // fall back to Paris silently so the preview still renders (D-18).
+      void buildUrl(PARIS);
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         buildUrl({ lat: pos.coords.latitude, lng: pos.coords.longitude });
