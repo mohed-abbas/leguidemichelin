@@ -1,5 +1,5 @@
 import { getServerSession } from "@/lib/get-server-session";
-import { api } from "@/lib/api";
+import { serverApi } from "@/lib/server-api";
 import { redirect } from "next/navigation";
 import { RedemptionRow } from "./_components/redemption-row";
 import type { RedemptionResponseType } from "@repo/shared-schemas";
@@ -12,9 +12,9 @@ export default async function RedemptionsPage() {
 
   let redemptions: RedemptionResponseType[] = [];
   try {
-    redemptions = await api.get<RedemptionResponseType[]>("/me/redemptions");
+    const data = await serverApi.get<{ items: RedemptionResponseType[] }>("/me/redemptions");
     // Ensure newest first
-    redemptions = [...redemptions].sort(
+    redemptions = [...data.items].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
   } catch {

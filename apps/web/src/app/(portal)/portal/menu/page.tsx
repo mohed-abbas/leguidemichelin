@@ -1,5 +1,5 @@
 import { getServerSession } from "@/lib/get-server-session";
-import { api } from "@/lib/api";
+import { serverApi } from "@/lib/server-api";
 import { DishList } from "./_components/dish-list";
 import { redirect } from "next/navigation";
 import type { DishResponseType } from "@repo/shared-schemas";
@@ -12,7 +12,8 @@ export default async function PortalMenuPage() {
 
   let dishes: DishResponseType[] = [];
   try {
-    dishes = await api.get<DishResponseType[]>("/portal/dishes");
+    const data = await serverApi.get<{ items: DishResponseType[] }>("/portal/dishes");
+    dishes = data.items;
   } catch {
     // Empty list on error — DishList shows empty state
   }

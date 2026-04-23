@@ -1,5 +1,5 @@
 import { getServerSession } from "@/lib/get-server-session";
-import { api } from "@/lib/api";
+import { serverApi } from "@/lib/server-api";
 import { redirect } from "next/navigation";
 import { QrRenderer } from "./_components/qr-renderer";
 import { QrPngDownload } from "./_components/qr-png-download";
@@ -13,7 +13,7 @@ export default async function PortalQrPage() {
 
   let qrData: PortalQrResponseType | null = null;
   try {
-    qrData = await api.get<PortalQrResponseType>("/portal/qr");
+    qrData = await serverApi.get<PortalQrResponseType>("/portal/qr");
   } catch {
     // handled below
   }

@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { api } from "@/lib/api";
+import { serverApi } from "@/lib/server-api";
 import { RestaurantGrid } from "./_components/restaurant-grid";
 import { RestaurantFilters } from "./_components/restaurant-filters";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,7 +17,7 @@ export default async function RestaurantsPage({ searchParams }: PageProps) {
 
   let restaurants: RestaurantResponseType[] = [];
   try {
-    const data = await api.get<{ items: RestaurantResponseType[] }>(
+    const data = await serverApi.get<{ items: RestaurantResponseType[] }>(
       `/restaurants${qs.size ? `?${qs}` : ""}`,
     );
     restaurants = data.items;

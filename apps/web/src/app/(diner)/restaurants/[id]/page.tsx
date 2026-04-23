@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { api } from "@/lib/api";
+import { serverApi } from "@/lib/server-api";
 import { Button } from "@/components/ui/button";
 import { RestaurantDetailHero } from "../_components/restaurant-detail-hero";
 import { RestaurantMenuList } from "../_components/restaurant-menu-list";
@@ -16,7 +16,7 @@ export default async function RestaurantDetailPage({ params }: PageProps) {
 
   let data: RestaurantMenuResponseType | null = null;
   try {
-    data = await api.get<RestaurantMenuResponseType>(`/restaurants/${id}/menu`);
+    data = await serverApi.get<RestaurantMenuResponseType>(`/restaurants/${id}/menu`);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       notFound();
