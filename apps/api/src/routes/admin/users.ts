@@ -84,6 +84,7 @@ adminUsersRouter.patch("/:id", async (req: Request, res: Response, next: NextFun
         restaurantId: true,
         disabledAt: true,
         createdAt: true,
+        _count: { select: { souvenirs: true } },
       },
     });
     res.json({
@@ -93,9 +94,7 @@ adminUsersRouter.patch("/:id", async (req: Request, res: Response, next: NextFun
       role: updated.role,
       totalPoints: updated.totalPoints,
       restaurantId: updated.restaurantId,
-      // Not recomputed on PATCH (admin UI re-fetches the list for fresh counts);
-      // shape kept consistent with the list endpoint.
-      souvenirCount: 0,
+      souvenirCount: updated._count.souvenirs,
       disabledAt: updated.disabledAt ? updated.disabledAt.toISOString() : null,
       createdAt: updated.createdAt.toISOString(),
     });
