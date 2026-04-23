@@ -49,6 +49,11 @@ export function SouvenirRevealClient({ souvenir }: SouvenirRevealClientProps) {
       const nw = storedNew !== null ? Number(storedNew) : old + souvenir.pointsAwarded;
       setOldBalance(old);
       setNewBalance(nw);
+      // Clear once consumed so a later reveal of a different souvenir (e.g.
+      // opened from the ledger) does not replay a stale oldBalance → newBalance
+      // tween. Append-only ledger remains the source of truth for balances.
+      sessionStorage.removeItem("lastBalance");
+      sessionStorage.removeItem("newBalance");
     } catch {
       // sessionStorage unavailable (private browsing / SSR) → keep defaults
     }
