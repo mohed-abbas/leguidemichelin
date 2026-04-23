@@ -165,9 +165,20 @@ adminRestaurantsRouter.patch("/:id", async (req: Request, res: Response, next: N
 /**
  * DELETE /api/admin/restaurants/:id — soft-disable (D-11). NEVER hard-deletes.
  * Returns the updated row so admin UI can render "disabled since ..." immediately.
+ *
+ * Rejects any query parameter (e.g. ?hard=1) with 400 — no hard-delete path
+ * exists at the API layer, and silently ignoring a flag that looks meaningful
+ * is a correctness trap for future tooling (H-02).
  */
 adminRestaurantsRouter.delete("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
+    if (Object.keys(req.query).length > 0) {
+      throw new BusinessError(
+        "validation",
+        400,
+        "hard-delete is not supported; soft-disable only",
+      );
+    }
     const existing = await prisma.restaurant.findUnique({ where: { id: String(req.params.id) } });
     if (!existing) throw new BusinessError("not_found", 404, "restaurant not found");
     const updated = await prisma.restaurant.update({
