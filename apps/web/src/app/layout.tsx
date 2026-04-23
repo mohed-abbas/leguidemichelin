@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Roboto } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const inter = Inter({
+const roboto = Roboto({
   subsets: ["latin"],
-  weight: ["400", "600"],
+  weight: ["400", "500", "700"],
   variable: "--font-sans-runtime",
   display: "swap",
 });
@@ -16,9 +16,9 @@ export const viewport: Viewport = {
   viewportFit: "cover",
   // REGENERATE-ON-CHANGE: this hex MUST mirror
   //   (a) packages/tokens/tokens.css --color-primary
-  //   (b) apps/web/public/manifest.webmanifest theme_color (Plan 5)
+  //   (b) apps/web/public/manifest.webmanifest theme_color
   // eslint-disable-next-line no-restricted-syntax
-  themeColor: "#B71C1C",
+  themeColor: "#BA0B2F",
 };
 
 export const metadata: Metadata = {
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={inter.variable}>
+    <html lang="fr" className={roboto.variable}>
       <body>
         <a href="#main" className="skip-link">
           Aller au contenu

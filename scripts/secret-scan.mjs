@@ -24,6 +24,8 @@ const PATTERNS = [
 ];
 
 const DOTENV_FILENAMES = /(^|\/)\.env(\..+)?$/;
+const BINARY_EXTS =
+  /\.(png|jpe?g|gif|webp|ico|svg|pdf|zip|gz|tgz|mp3|mp4|mov|woff2?|ttf|otf|eot)$/i;
 
 function staged() {
   const out = execSync("git diff --cached --name-only --diff-filter=ACMR", {
@@ -38,6 +40,12 @@ for (const file of staged()) {
   if (DOTENV_FILENAMES.test(file) && !file.endsWith(".example")) {
     console.error(`[secret-scan] BLOCK: ${file} looks like an env file`);
     failed = true;
+    continue;
+  }
+
+  // Skip known binary assets — their raw bytes decode as garbage UTF-8
+  // that accidentally matches our KEY=VALUE generic-env pattern.
+  if (BINARY_EXTS.test(file)) {
     continue;
   }
 
