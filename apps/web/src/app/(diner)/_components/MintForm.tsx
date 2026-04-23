@@ -296,7 +296,7 @@ export function MintForm({ restaurant, menu }: MintFormProps) {
             <input
               id="mint-photo-input"
               type="file"
-              accept="image/jpeg,image/png,image/heic,image/heif"
+              accept="image/jpeg,image/png"
               capture="environment"
               hidden
               onChange={handlePhotoChange}
