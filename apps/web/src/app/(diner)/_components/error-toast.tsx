@@ -9,8 +9,8 @@ const FRENCH_BY_CODE: Record<string, string> = {
   forbidden: "Action non autorisée",
   not_found: "Introuvable",
   validation: "Entrée invalide",
+  insufficient_balance: "Solde insuffisant pour cette récompense",
   internal: "Erreur serveur — réessayez",
-  account_disabled: "Compte désactivé",
 };
 
 export function surfaceApiError<TFieldValues extends FieldValues = FieldValues>(
