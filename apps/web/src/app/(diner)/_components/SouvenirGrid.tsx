@@ -146,7 +146,11 @@ function ratingContent(rating: Rating) {
   if (rating === "BIB") {
     return <span aria-hidden>Bib</span>;
   }
-  const count = rating === "ONE" ? 1 : rating === "TWO" ? 2 : 3;
+  // Defensive: if the API ever returns an unknown rating (new enum member
+  // added server-side but not yet in the deployed shared-schemas package),
+  // render nothing rather than falsely claiming 3 stars.
+  const count = rating === "ONE" ? 1 : rating === "TWO" ? 2 : rating === "THREE" ? 3 : 0;
+  if (count === 0) return null;
   return Array.from({ length: count }, (_, i) => (
     <Star
       key={i}
@@ -168,5 +172,7 @@ function ratingLabel(rating: Rating): string {
       return "2 étoiles";
     case "THREE":
       return "3 étoiles";
+    default:
+      return "Restaurant étoilé";
   }
 }
