@@ -147,7 +147,14 @@ export function MintForm({ restaurant, menu }: MintFormProps) {
       });
 
       if (!res.ok) {
-        const payload = await res.json().catch(() => ({ error: "internal" }));
+        // Fallback payload when the server returns a non-JSON error body
+        // (e.g. an upstream 502 before the API layer formats a proper
+        // envelope). "internal_error" is not in ErrorCode.enum, so the
+        // switch below falls through to the default French copy instead of
+        // surfacing a raw "500 internal" to the user.
+        const payload = await res
+          .json()
+          .catch(() => ({ error: "internal_error", message: "Erreur serveur" }));
         throw new ApiError(
           res.status,
           payload as { error: string; message?: string; fields?: Record<string, string> },
