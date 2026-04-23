@@ -27,6 +27,17 @@ export const DishPatch = z
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field required" });
 export type DishPatchType = z.infer<typeof DishPatch>;
 
+/**
+ * PATCH /api/admin/restaurants/:id/dishes/reorder body.
+ * Ordered list of dish ids belonging to the restaurant — server rewrites
+ * sortOrder as 0..N-1 in a single $transaction. List must be a complete
+ * permutation; duplicates or unknown ids are rejected.
+ */
+export const DishReorder = z.object({
+  orderedIds: z.array(z.string().min(1)).min(1),
+});
+export type DishReorderType = z.infer<typeof DishReorder>;
+
 /** Re-export dish response as DishResponse so portal consumers have a stable name. */
 export const DishResponse = DishResponseShape;
 export type DishResponseType = z.infer<typeof DishResponse>;

@@ -5,6 +5,7 @@ import {
   AdminRestaurantPatch,
   DishCreate,
   DishPatch,
+  DishReorder,
 } from "@repo/shared-schemas";
 import { ValidationError, BusinessError } from "../../errors.js";
 import { dishService } from "../../services/dish.js";
@@ -223,6 +224,31 @@ adminRestaurantsRouter.post(
       if (!existing) throw new BusinessError("not_found", 404, "restaurant not found");
       const dish = await dishService.create(existing.id, parsed.data);
       res.status(201).json(toDishResponse(dish));
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+/**
+ * PATCH /api/admin/restaurants/:id/dishes/reorder — atomic reorder.
+ * Rewrites sortOrder as 0..N-1 in a single $transaction so a partial failure
+ * cannot leave the list with duplicate or gap values. M-01 + M-02 fix.
+ *
+ * MUST be registered BEFORE the `/:id/dishes/:dishId` route below — otherwise
+ * Express matches `:dishId = "reorder"` first and this handler becomes dead code.
+ */
+adminRestaurantsRouter.patch(
+  "/:id/dishes/reorder",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const parsed = DishReorder.safeParse(req.body);
+      if (!parsed.success) throw new ValidationError(parsed.error);
+      const existing = await prisma.restaurant.findUnique({ where: { id: String(req.params.id) } });
+      if (!existing) throw new BusinessError("not_found", 404, "restaurant not found");
+      await dishService.reorder(existing.id, parsed.data.orderedIds);
+      const rows = await dishService.listForRestaurant(existing.id);
+      res.json({ dishes: rows.map(toDishResponse) });
     } catch (err) {
       next(err);
     }
