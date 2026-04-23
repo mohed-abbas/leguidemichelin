@@ -48,6 +48,7 @@ tools/scrape/.cache/
 
 # Per-dev task briefs (ILIA-TASKS.md, MURX-TASKS.md, WILSON-TASKS.md, etc.)
 *-TASKS.md
+WILSON-TASKS copy.md
 
 # Local-only manual test matrix (not committed)
 scripts/admin-test-matrix.md
