@@ -195,7 +195,13 @@ export function MapCanvas() {
     (["visited", "unvisited"] as const).forEach((variant) => {
       const img = new Image(48, 48);
       img.onload = () => {
-        if (!map.hasImage(`pin-${variant}`)) map.addImage(`pin-${variant}`, img);
+        if (!map.hasImage(`pin-${variant}`)) {
+          map.addImage(`pin-${variant}`, img);
+          // Force a repaint so symbol layers referencing the just-registered
+          // image render on the next frame — avoids a blank-square flash when
+          // the bbox fetch resolves before the SVG finishes decoding.
+          map.triggerRepaint();
+        }
       };
       img.src = `/pins/${variant}.svg`; // static assets from 04-01
     });
