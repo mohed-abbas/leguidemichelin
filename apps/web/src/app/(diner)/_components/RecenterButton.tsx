@@ -35,8 +35,14 @@ export function RecenterButton({ onRecenter }: RecenterButtonProps) {
       (pos) => {
         onRecenter(pos.coords.longitude, pos.coords.latitude);
       },
-      () => {
-        toast.error("Impossible de vous localiser.");
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          toast.error("Autorisez la géolocalisation dans les réglages du navigateur.");
+        } else if (err.code === err.TIMEOUT) {
+          toast.error("Géolocalisation trop lente. Réessayez.");
+        } else {
+          toast.error("Impossible de vous localiser.");
+        }
       },
       { timeout: 3000 },
     );
