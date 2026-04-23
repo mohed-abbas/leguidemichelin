@@ -34,8 +34,13 @@ export const imagesRouter = Router();
  */
 imagesRouter.get("/*splat", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const raw =
-      (req.params as Record<string, string>).splat ?? (req.params as Record<string, string>)["0"];
+    // Express 5 named wildcards are an ARRAY of path segments when multiple slashes
+    // match — stringifying it directly joins with commas, producing bogus keys like
+    // `souvenirs,2026,thumb,abc.jpg`. Join on `/` to restore the original key shape.
+    const splat = (req.params as Record<string, string | string[]>).splat;
+    const raw = Array.isArray(splat)
+      ? splat.join("/")
+      : (splat ?? (req.params as Record<string, string>)["0"]);
     if (!raw) {
       throw new BusinessError("not_found", 404, "image not found");
     }

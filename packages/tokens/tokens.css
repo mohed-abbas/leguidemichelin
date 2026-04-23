@@ -18,19 +18,20 @@
   /* ─── Palette (Michelin-INSPIRED, placeholder values) ────────────────── */
   /* PITFALLS #11: do NOT use exact Michelin red #C8102E. */
   --color-bg: oklch(0.985 0.003 80);
-  --color-surface: #FFFFFF;
+  --color-surface: #ffffff;
   --color-surface-muted: oklch(0.97 0.005 80);
-  --color-ink: #0A0A0A;
+  --color-ink: #0a0a0a;
   --color-ink-muted: #525252;
   --color-border: oklch(0.9 0.004 80);
-  --color-primary: #B71C1C;
-  --color-primary-fg: #FFFFFF;
+  --color-primary: #b71c1c;
+  --color-primary-fg: #ffffff;
+  --color-accent-gold: #d4af37;
   --color-accent: #111111;
-  --color-destructive: #991B1B;
-  --color-destructive-fg: #FFFFFF;
+  --color-destructive: #991b1b;
+  --color-destructive-fg: #ffffff;
   --color-success: #166534;
-  --color-warning: #854D0E;
-  --color-info: #1E40AF;
+  --color-warning: #854d0e;
+  --color-info: #1e40af;
   --color-focus-ring: oklch(0.6 0.2 27);
 
   /* ─── Typography ──────────────────────────────────────────────────────── */
@@ -38,10 +39,10 @@
   --font-weight-regular: 400;
   --font-weight-semibold: 600;
 
-  --font-size-sm: 0.875rem;   /* 14 */
-  --font-size-base: 1rem;     /* 16 */
-  --font-size-lg: 1.25rem;    /* 20 */
-  --font-size-xl: 1.75rem;    /* 28 */
+  --font-size-sm: 0.875rem; /* 14 */
+  --font-size-base: 1rem; /* 16 */
+  --font-size-lg: 1.25rem; /* 20 */
+  --font-size-xl: 1.75rem; /* 28 */
 
   --line-height-sm: 1.5;
   --line-height-base: 1.5;

@@ -14,21 +14,23 @@
 export interface ApiErrorPayload {
   /** Flat string-code error — matches Express index.ts 404 + middleware shape. */
   error: string;
-  /** Optional per-field errors (Express may return these on 400 from Zod). */
-  fieldErrors?: Record<string, string>;
+  /** Optional human-readable message returned alongside the error code. */
+  message?: string;
+  /** Optional per-field errors keyed by Zod field-path (joined by `.`), from the backend `{ fields }` body per BACKEND-CONTRACT.md Error Contract. */
+  fields?: Record<string, string>;
 }
 
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
-  readonly fieldErrors?: Record<string, string>;
+  readonly fields?: Record<string, string>;
 
   constructor(status: number, payload: ApiErrorPayload) {
     super(`${status} ${payload.error}`);
     this.name = "ApiError";
     this.status = status;
     this.code = payload.error;
-    this.fieldErrors = payload.fieldErrors;
+    this.fields = payload.fields;
   }
 }
 
