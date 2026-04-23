@@ -59,7 +59,7 @@ function MissingTokenCard() {
         }}
       >
         Mapbox non configuré. Définissez <code>NEXT_PUBLIC_MAPBOX_TOKEN</code> dans{" "}
-        <code>apps/web/.env.local</code>.
+        <code>guide-dev/.env</code>, puis recréez le conteneur web.
       </p>
     </div>
   );

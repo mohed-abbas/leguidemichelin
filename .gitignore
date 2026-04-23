@@ -20,6 +20,10 @@ packages/db/src/generated/
 .env.*
 !.env.example
 
+# Demo credentials file — generated locally for team sharing, never committed.
+# Source of truth for credentials lives in README.md > Demo Credentials.
+docs/DEMO-CREDENTIALS.txt
+
 # OS
 .DS_Store
 Thumbs.db
