@@ -1,0 +1,31 @@
+/*
+ * SouvenirGrid — responsive tile grid.
+ *
+ * Media queries live in a CSS module because inline styles can't express
+ * them. Every color / spacing value resolves to a design token (no raw
+ * hex), so the ESLint hex-guard (packages/config/eslint/base.js) stays
+ * silent — this file isn't under its glob, but we keep the convention.
+ *
+ * Breakpoints match 04-CONTEXT.md D-12:
+ *   - <  640px → 2 columns (thumb phones)
+ *   - >= 640px → 3 columns (large phones / small tablets)
+ *   - >= 1024px → 4 columns (desktop)
+ */
+
+.grid {
+  display: grid;
+  gap: var(--space-sm);
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
