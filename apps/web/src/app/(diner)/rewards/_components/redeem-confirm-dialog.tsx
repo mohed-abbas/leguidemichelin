@@ -40,7 +40,7 @@ export function RedeemConfirmDialog({
     } catch (err) {
       if (err instanceof ApiError && err.code === "insufficient_balance") {
         setInsufficientMsg(
-          `Pas assez de points — solde : ${balance}, requis : ${reward.pointsCost}.`,
+          `Pas assez d’étoiles — solde : ${balance}, requis : ${reward.pointsCost}.`,
         );
       } else {
         surfaceApiError(err);
@@ -50,20 +50,49 @@ export function RedeemConfirmDialog({
     }
   }
 
+  const formattedCost = reward.pointsCost.toLocaleString("fr-FR");
+  const formattedBalance = balance.toLocaleString("fr-FR");
+  const formattedAfter = (balance - reward.pointsCost).toLocaleString("fr-FR");
+
+  const StarIcon = () => (
+    <img
+      src="/images/chasseur/icon-star-mini-red.svg"
+      alt=""
+      aria-hidden
+      width={14}
+      height={16}
+      style={{ display: "inline-block", verticalAlign: "-2px", marginInline: 2 }}
+    />
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Utiliser une récompense</DialogTitle>
+          <DialogTitle>Échanger une récompense</DialogTitle>
         </DialogHeader>
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-          <p style={{ margin: 0 }}>
-            Utiliser <strong>{reward.pointsCost} pts</strong> pour «&nbsp;{reward.title}&nbsp;» ?
+          <p style={{ margin: 0, fontSize: "var(--font-size-base)" }}>
+            Échanger{" "}
+            <strong style={{ color: "var(--color-primary)" }}>
+              {formattedCost}
+              <StarIcon />
+            </strong>{" "}
+            pour «&nbsp;{reward.title}&nbsp;» ?
           </p>
           <p
             style={{ margin: 0, color: "var(--color-ink-muted)", fontSize: "var(--font-size-sm)" }}
           >
-            Solde actuel : <strong>{balance} pts</strong>
+            Solde actuel :{" "}
+            <strong>
+              {formattedBalance}
+              <StarIcon />
+            </strong>{" "}
+            · Après échange :{" "}
+            <strong>
+              {formattedAfter}
+              <StarIcon />
+            </strong>
           </p>
           {insufficientMsg && (
             <p

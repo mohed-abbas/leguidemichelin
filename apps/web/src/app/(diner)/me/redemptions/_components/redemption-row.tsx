@@ -44,9 +44,19 @@ export function RedemptionRow({ redemption: r }: RedemptionRowProps) {
             color: "var(--color-ink-muted)",
             fontSize: "var(--font-size-sm)",
             flexShrink: 0,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 3,
           }}
         >
-          −{r.pointsSpent} pts
+          −{r.pointsSpent}
+          <img
+            src="/images/chasseur/icon-star-mini-red.svg"
+            alt=""
+            width={12}
+            height={14}
+            aria-hidden
+          />
         </span>
       </div>
       <div

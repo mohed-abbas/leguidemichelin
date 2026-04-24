@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import type { RewardResponseType } from "@repo/shared-schemas";
 import { BadgeRow } from "./BadgeRow";
 import { CollectionList } from "./CollectionList";
 import { ExperiencesPanel } from "./ExperiencesPanel";
@@ -18,11 +19,15 @@ export function ChasseurTabs({
   starCount,
   bestExperiences,
   experiences,
+  featuredRewards,
+  pointsBalance,
 }: {
   items: CollectionItem[];
   starCount: number;
   bestExperiences: BestExperienceChip[];
   experiences: ExperienceCardData[];
+  featuredRewards: RewardResponseType[];
+  pointsBalance: number;
 }) {
   const [tab, setTab] = useState<Tab>("etoiles");
 
@@ -72,7 +77,7 @@ export function ChasseurTabs({
           <StarCountHero count={starCount} />
           <BadgeRow />
           <CollectionList items={items} />
-          <RewardCard />
+          <RewardCard rewards={featuredRewards} balance={pointsBalance} />
         </section>
       ) : (
         <section id="tabpanel-experiences" role="tabpanel">

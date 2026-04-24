@@ -1,7 +1,7 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { RedeemConfirmDialog } from "./redeem-confirm-dialog";
 import type { RewardResponseType } from "@repo/shared-schemas";
 
@@ -11,72 +11,149 @@ interface RewardCardProps {
   onRedeemed: (newBalance: number) => void;
 }
 
+function formatPoints(n: number): string {
+  return n.toLocaleString("fr-FR");
+}
+
 export function RewardCard({ reward, balance, onRedeemed }: RewardCardProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const canAfford = balance >= reward.pointsCost;
+  const affordable = balance >= reward.pointsCost;
 
   return (
-    <div
+    <article
       style={{
+        position: "relative",
+        background: "var(--color-surface)",
+        borderRadius: 11,
+        boxShadow: "0 0 9px 0 rgba(0, 0, 0, 0.07)",
+        padding: "24px 16px 22px 15px",
+        minHeight: 202,
         display: "flex",
         flexDirection: "column",
-        gap: "var(--space-md)",
-        padding: "var(--space-md)",
-        background: "var(--color-surface)",
-        border: "1px solid var(--color-border)",
-        borderRadius: "var(--radius-lg)",
       }}
     >
-      {reward.imageKey && (
-        <img
-          src={`/api/images/${reward.imageKey}`}
-          alt={reward.title}
+      <Image
+        src="/images/chasseur/icon-bib-gourmand.svg"
+        alt=""
+        width={36}
+        height={31}
+        aria-hidden
+        style={{
+          position: "absolute",
+          top: 22,
+          right: 18,
+          flex: "0 0 auto",
+        }}
+      />
+
+      <h3
+        style={{
+          margin: 0,
+          paddingRight: 60,
+          fontFamily: "var(--font-sans)",
+          fontSize: 24,
+          fontWeight: "var(--font-weight-regular)",
+          color: "var(--color-ink)",
+          lineHeight: 1.15,
+        }}
+      >
+        {reward.title}
+      </h3>
+
+      {reward.description ? (
+        <p
           style={{
-            width: "100%",
-            height: "120px",
-            objectFit: "cover",
-            borderRadius: "var(--radius-md)",
+            margin: "13px 18px 0 0",
+            fontFamily: "var(--font-sans)",
+            fontSize: 13,
+            fontWeight: "var(--font-weight-regular)",
+            color: "var(--color-ink-muted)",
+            lineHeight: "17px",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
           }}
-        />
-      )}
-      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontWeight: "var(--font-weight-semibold)" }}>{reward.title}</span>
-          <span
+        >
+          {reward.description}
+        </p>
+      ) : null}
+
+      <div
+        style={{
+          marginTop: "auto",
+          paddingTop: 24,
+          paddingLeft: 13,
+          display: "flex",
+          alignItems: "center",
+          gap: 18,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setDialogOpen(true)}
+          disabled={!affordable}
+          style={{
+            appearance: "none",
+            border: "none",
+            width: 140,
+            height: 44,
+            borderRadius: 35,
+            background: affordable ? "var(--color-primary)" : "var(--color-chasseur-track)",
+            color: "var(--color-primary-fg)",
+            fontFamily: "var(--font-sans)",
+            fontSize: 14,
+            fontWeight: "var(--font-weight-regular)",
+            lineHeight: "16.2px",
+            cursor: affordable ? "pointer" : "not-allowed",
+          }}
+        >
+          J’utilise mon bon
+        </button>
+
+        {affordable ? (
+          <button
+            type="button"
+            onClick={() => setDialogOpen(true)}
             style={{
-              background: "var(--color-surface-muted)",
-              border: "1px solid var(--color-border)",
-              borderRadius: "var(--radius-md)",
-              padding: "2px var(--space-xs)",
-              fontSize: "var(--font-size-sm)",
-              fontWeight: "var(--font-weight-semibold)",
-              flexShrink: 0,
+              appearance: "none",
+              border: "none",
+              background: "transparent",
+              padding: 0,
+              fontFamily: "var(--font-sans)",
+              fontSize: 14,
+              fontWeight: "var(--font-weight-regular)",
+              color: "var(--color-ink)",
+              lineHeight: "16.2px",
+              cursor: "pointer",
             }}
           >
-            {reward.pointsCost} pts
-          </span>
-        </div>
-        {reward.description && (
-          <p
-            style={{ margin: 0, color: "var(--color-ink-muted)", fontSize: "var(--font-size-sm)" }}
+            Détails
+          </button>
+        ) : (
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: 14,
+              fontWeight: "var(--font-weight-regular)",
+              color: "var(--color-ink-muted)",
+              lineHeight: "16.2px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+            }}
           >
-            {reward.description}
-          </p>
+            Encore {formatPoints(reward.pointsCost - balance)}
+            <Image
+              src="/images/chasseur/icon-star-mini-red.svg"
+              alt=""
+              width={14}
+              height={16}
+              aria-hidden
+            />
+          </span>
         )}
       </div>
-      {canAfford ? (
-        <Button type="button" onClick={() => setDialogOpen(true)}>
-          Utiliser
-        </Button>
-      ) : (
-        <Button
-          type="button"
-          disabled
-          title={`Il vous manque ${reward.pointsCost - balance} points.`}
-        >
-          Il vous manque {reward.pointsCost - balance} pts
-        </Button>
-      )}
 
       <RedeemConfirmDialog
         reward={reward}
@@ -85,6 +162,6 @@ export function RewardCard({ reward, balance, onRedeemed }: RewardCardProps) {
         onOpenChange={setDialogOpen}
         onRedeemed={onRedeemed}
       />
-    </div>
+    </article>
   );
 }

@@ -1,6 +1,7 @@
 import { getServerSession } from "@/lib/get-server-session";
 import { serverApi } from "@/lib/server-api";
 import { redirect } from "next/navigation";
+import { RewardsHeader } from "./_components/rewards-header";
 import { RewardsList } from "./_components/rewards-list";
 import type { RewardResponseType, MePointsResponseType } from "@repo/shared-schemas";
 
@@ -19,17 +20,11 @@ export default async function RewardsPage() {
   const balance = pointsResult.status === "fulfilled" ? pointsResult.value.balance : 0;
 
   return (
-    <section style={{ display: "flex", flexDirection: "column", gap: "var(--space-lg)" }}>
-      <h1
-        style={{
-          fontSize: "var(--font-size-xl)",
-          fontWeight: "var(--font-weight-semibold)",
-          margin: 0,
-        }}
-      >
-        Récompenses
-      </h1>
+    <div style={{ background: "var(--color-bg)", minHeight: "100dvh" }}>
+      <RewardsHeader />
       <RewardsList rewards={rewards} initialBalance={balance} />
-    </section>
+    </div>
   );
 }
+
+export const metadata = { title: "Récompenses — Guide Foodie Journey" };

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-export function ChasseurHeader() {
+export function RewardsHeader() {
   const router = useRouter();
 
   return (
@@ -11,6 +11,7 @@ export function ChasseurHeader() {
       style={{
         position: "relative",
         height: 78,
+        borderBottom: "0.5px solid var(--color-border)",
       }}
     >
       <button
@@ -49,7 +50,7 @@ export function ChasseurHeader() {
           whiteSpace: "nowrap",
         }}
       >
-        Chasseur d’étoiles
+        Récompenses
       </h1>
     </header>
   );

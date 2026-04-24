@@ -1,25 +1,8 @@
 import { prisma } from "@repo/db";
-import type { PrismaClient, MichelinRating as PrismaMichelinRating } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { BusinessError } from "../errors.js";
 
 type TxClient = Parameters<Parameters<PrismaClient["$transaction"]>[0]>[0];
-
-/**
- * Point awards by Michelin tier (v1 spec).
- * Bib Gourmand = 50, ★ = 100, ★★ = 300, ★★★ = 1000.
- */
-export function pointsForRating(rating: PrismaMichelinRating): number {
-  switch (rating) {
-    case "BIB":
-      return 50;
-    case "ONE":
-      return 100;
-    case "TWO":
-      return 300;
-    case "THREE":
-      return 1000;
-  }
-}
 
 export interface AwardPointsInput {
   userId: string;
@@ -30,19 +13,17 @@ export interface AwardPointsInput {
   usedDefaultImage: boolean;
 }
 
+/** Base star awarded by a souvenir mint (one per visit). */
+export const SOUVENIR_BASE_STARS = 1;
+
 /**
- * Atomic souvenir mint (Phase 3 success criterion #3).
+ * Atomic souvenir mint — star-based ledger.
+ *   - Always +1 star per visit (SOUVENIR_MINT).
+ *   - The +1 review bonus is awarded SEPARATELY by createReview()
+ *     (source=REVIEW_BONUS), never by this service.
  *
- *   - Verify restaurant exists and is NOT disabled (D-08).
- *   - Verify dish exists AND belongs to that restaurant.
- *   - In ONE prisma.$transaction:
- *       1) insert Souvenir (denormalized fields: pointsAwarded, usedDefaultImage)
- *       2) insert PointTransaction (source=SOUVENIR_MINT, delta=+pointsAwarded, souvenirId)
- *       3) increment User.totalPoints by pointsAwarded
- *
- * Returns the souvenir JOINED with restaurant + dish so the caller can
- * build the Plan 02 SouvenirResponse (with denormalized restaurantName etc.)
- * without a follow-up query.
+ * Insert Souvenir + PointTransaction (+1) + increment User.totalPoints, all
+ * inside one prisma.$transaction.
  */
 export async function awardPoints(input: AwardPointsInput) {
   const { userId, restaurantId, dishId, note, imageKey, usedDefaultImage } = input;
@@ -59,7 +40,7 @@ export async function awardPoints(input: AwardPointsInput) {
   });
   if (!dish) throw new BusinessError("not_found", 404, "dish not found");
 
-  const pointsAwarded = pointsForRating(restaurant.michelinRating);
+  const starsAwarded = SOUVENIR_BASE_STARS;
 
   const result = await prisma.$transaction(async (tx: TxClient) => {
     const souvenir = await tx.souvenir.create({
@@ -70,20 +51,20 @@ export async function awardPoints(input: AwardPointsInput) {
         note: note ?? null,
         imageKey,
         usedDefaultImage,
-        pointsAwarded,
+        pointsAwarded: starsAwarded,
       },
     });
     await tx.pointTransaction.create({
       data: {
         userId,
-        delta: pointsAwarded,
+        delta: starsAwarded,
         source: "SOUVENIR_MINT",
         souvenirId: souvenir.id,
       },
     });
     const user = await tx.user.update({
       where: { id: userId },
-      data: { totalPoints: { increment: pointsAwarded } },
+      data: { totalPoints: { increment: starsAwarded } },
       select: { totalPoints: true },
     });
     return { souvenir, newBalance: user.totalPoints };

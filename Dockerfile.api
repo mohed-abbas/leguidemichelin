@@ -60,6 +60,10 @@ COPY --from=builder /workspace/apps/api/dist ./apps/api/dist
 COPY --from=builder /workspace/packages/db/dist ./packages/db/dist
 COPY --from=builder /workspace/packages/db/prisma ./packages/db/prisma
 COPY --from=builder /workspace/packages/shared-schemas/dist ./packages/shared-schemas/dist
+# Scrape fixture is read by packages/db/prisma/seed.ts (relative path
+# ../../../tools/scrape/seed-data/restaurants.fallback.json). Without this
+# the prod seed service will fail to find restaurants.
+COPY --from=builder /workspace/tools/scrape/seed-data ./tools/scrape/seed-data
 COPY --from=builder /workspace/node_modules ./node_modules
 
 EXPOSE 3001

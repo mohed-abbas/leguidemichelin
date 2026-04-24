@@ -38,9 +38,39 @@ services:
     restart: unless-stopped
     volumes:
       - /srv/foodie/images:/var/data/images # host bind per D-10 (Phase 6 confirms exact path)
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/healthz >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
     depends_on:
       migrate:
         condition: service_completed_successfully
+
+  # One-shot: idempotent demo seed (restaurants/dishes/rewards + admin/staff/diner
+  # demo accounts + sample souvenirs). Reuses packages/db/prisma/seed.ts via tsx
+  # which is bundled into the runtime image (builder stage's full node_modules
+  # is copied into runtime, so devDeps like tsx and prisma CLI are available).
+  #
+  # Demo accounts (passwords are in seed.ts and source-controlled — fine for a
+  # demo VPS, NOT for a real production deployment). Change them in seed.ts
+  # before deploying anywhere you don't want public admin access.
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      target: runtime
+    env_file: .env
+    environment:
+      SEED_API_BASE: "http://api:3001"
+    command: sh -c "cd /app/packages/db && npx tsx prisma/seed.ts"
+    depends_on:
+      api:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
 
   web:
     build:
