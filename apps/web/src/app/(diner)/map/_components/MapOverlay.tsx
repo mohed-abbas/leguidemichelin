@@ -66,7 +66,7 @@ export function MapOverlay() {
         }}
       >
         <Link
-          href="/accueil"
+          href="/"
           aria-label="Retour"
           style={{
             pointerEvents: "auto",
