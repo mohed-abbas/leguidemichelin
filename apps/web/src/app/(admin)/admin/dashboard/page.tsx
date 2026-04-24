@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import type { AdminStatsResponseType } from "@repo/shared-schemas";
+import { PageHeader } from "../../_components/page-header";
 import { StatsCards } from "../../_components/stats-cards";
 
 async function getStats(): Promise<AdminStatsResponseType> {
@@ -18,27 +19,12 @@ async function getStats(): Promise<AdminStatsResponseType> {
 export default async function DashboardPage() {
   const stats = await getStats();
   return (
-    <section
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "var(--space-lg)",
-      }}
-    >
-      <header>
-        <h1
-          style={{
-            fontSize: "var(--font-size-xl)",
-            fontWeight: "var(--font-weight-semibold)",
-            margin: 0,
-          }}
-        >
-          Tableau de bord
-        </h1>
-        <p style={{ color: "var(--color-ink-muted)", margin: "var(--space-xs) 0 0" }}>
-          Vue d&apos;ensemble de la plateforme.
-        </p>
-      </header>
+    <section style={{ display: "flex", flexDirection: "column", gap: "var(--space-lg)" }}>
+      <PageHeader
+        eyebrow="Vue d'ensemble"
+        title="Tableau de bord"
+        description="État de la plateforme — restaurants, membres, souvenirs, économie de points."
+      />
       <StatsCards stats={stats} />
     </section>
   );

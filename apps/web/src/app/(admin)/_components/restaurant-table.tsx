@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Pencil, Power, RotateCcw } from "lucide-react";
+import { ExternalLink, Pencil, Power, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { AdminRestaurantResponseType } from "@repo/shared-schemas";
 import { RATING_LABEL } from "./rating";
+import { DataCard, EmptyState } from "./data-card";
+import { StatusPill } from "./status-pill";
 
 interface Props {
   rows: AdminRestaurantResponseType[];
@@ -13,50 +15,57 @@ interface Props {
   onEnable: (row: AdminRestaurantResponseType) => void;
 }
 
+const HEAD_CELL: React.CSSProperties = {
+  padding: "var(--space-sm) var(--space-md)",
+  textAlign: "left",
+  fontSize: "var(--font-size-xs)",
+  textTransform: "uppercase",
+  letterSpacing: "0.06em",
+  fontWeight: "var(--font-weight-semibold)",
+  color: "var(--color-ink-muted)",
+};
+
+const CELL: React.CSSProperties = {
+  padding: "var(--space-md)",
+  fontSize: "var(--font-size-sm)",
+  color: "var(--color-ink)",
+  verticalAlign: "middle",
+};
+
 export function RestaurantTable({ rows, onEdit, onDisable, onEnable }: Props) {
   if (rows.length === 0) {
     return (
-      <div
-        style={{
-          padding: "var(--space-xl)",
-          textAlign: "center",
-          color: "var(--color-ink-muted)",
-          background: "var(--color-surface)",
-          border: "1px solid var(--color-border)",
-          borderRadius: "var(--radius-lg)",
-        }}
-      >
-        Aucun restaurant ne correspond aux filtres.
-      </div>
+      <DataCard>
+        <EmptyState
+          title="Aucun restaurant"
+          hint="Aucun restaurant ne correspond aux filtres actifs. Élargissez la sélection ou créez un nouveau restaurant."
+        />
+      </DataCard>
     );
   }
 
   return (
-    <div
-      style={{
-        background: "var(--color-surface)",
-        border: "1px solid var(--color-border)",
-        borderRadius: "var(--radius-lg)",
-        overflow: "hidden",
-      }}
-    >
+    <DataCard>
       <table
         style={{
           width: "100%",
-          borderCollapse: "collapse",
-          fontSize: "var(--font-size-sm)",
+          borderCollapse: "separate",
+          borderSpacing: 0,
         }}
       >
-        <thead>
-          <tr style={{ background: "var(--color-surface-muted)", textAlign: "left" }}>
-            <th style={{ padding: "var(--space-sm) var(--space-md)" }}>Nom</th>
-            <th style={{ padding: "var(--space-sm) var(--space-md)" }}>Ville</th>
-            <th style={{ padding: "var(--space-sm) var(--space-md)" }}>Distinction</th>
-            <th style={{ padding: "var(--space-sm) var(--space-md)" }}>Cuisine</th>
-            <th style={{ padding: "var(--space-sm) var(--space-md)" }}>Statut</th>
+        <thead style={{ background: "var(--color-surface-muted)" }}>
+          <tr>
+            <th style={{ ...HEAD_CELL, borderBottom: "1px solid var(--color-border)" }}>Nom</th>
+            <th style={{ ...HEAD_CELL, borderBottom: "1px solid var(--color-border)" }}>Ville</th>
+            <th style={{ ...HEAD_CELL, borderBottom: "1px solid var(--color-border)" }}>
+              Distinction
+            </th>
+            <th style={{ ...HEAD_CELL, borderBottom: "1px solid var(--color-border)" }}>Cuisine</th>
+            <th style={{ ...HEAD_CELL, borderBottom: "1px solid var(--color-border)" }}>Statut</th>
             <th
               style={{
-                padding: "var(--space-sm) var(--space-md)",
+                ...HEAD_CELL,
+                borderBottom: "1px solid var(--color-border)",
                 textAlign: "right",
               }}
             >
@@ -65,72 +74,96 @@ export function RestaurantTable({ rows, onEdit, onDisable, onEnable }: Props) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => {
+          {rows.map((row, idx) => {
             const disabled = row.disabledAt !== null;
             return (
               <tr
                 key={row.id}
                 style={{
-                  borderTop: "1px solid var(--color-border)",
-                  opacity: disabled ? 0.65 : 1,
+                  borderTop: idx === 0 ? "none" : "1px solid var(--color-border)",
+                  opacity: disabled ? 0.7 : 1,
+                  transition: "background var(--duration-fast) var(--ease-standard)",
                 }}
               >
-                <td style={{ padding: "var(--space-sm) var(--space-md)" }}>
+                <td
+                  style={{
+                    ...CELL,
+                    borderTop: idx === 0 ? "none" : "1px solid var(--color-border)",
+                  }}
+                >
                   <Link
                     href={`/admin/restaurants/${row.id}`}
                     style={{
                       color: "var(--color-ink)",
                       fontWeight: "var(--font-weight-semibold)",
                       textDecoration: "none",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
                     }}
                   >
                     {row.name}
+                    <ExternalLink
+                      size={12}
+                      aria-hidden
+                      style={{ color: "var(--color-ink-subtle)" }}
+                    />
                   </Link>
-                </td>
-                <td style={{ padding: "var(--space-sm) var(--space-md)" }}>{row.city}</td>
-                <td style={{ padding: "var(--space-sm) var(--space-md)" }}>
-                  {RATING_LABEL[row.michelinRating]}
                 </td>
                 <td
                   style={{
-                    padding: "var(--space-sm) var(--space-md)",
-                    color: "var(--color-ink-muted)",
+                    ...CELL,
+                    borderTop: idx === 0 ? "none" : "1px solid var(--color-border)",
+                  }}
+                >
+                  {row.city}
+                </td>
+                <td
+                  style={{
+                    ...CELL,
+                    borderTop: idx === 0 ? "none" : "1px solid var(--color-border)",
+                  }}
+                >
+                  <span
+                    style={{
+                      color:
+                        row.michelinRating === "BIB"
+                          ? "var(--color-ink)"
+                          : "var(--color-accent-gold)",
+                      fontWeight: "var(--font-weight-semibold)",
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    {RATING_LABEL[row.michelinRating]}
+                  </span>
+                </td>
+                <td
+                  style={{
+                    ...CELL,
+                    color: row.cuisine ? "var(--color-ink)" : "var(--color-ink-subtle)",
+                    borderTop: idx === 0 ? "none" : "1px solid var(--color-border)",
                   }}
                 >
                   {row.cuisine ?? "—"}
                 </td>
-                <td style={{ padding: "var(--space-sm) var(--space-md)" }}>
+                <td
+                  style={{
+                    ...CELL,
+                    borderTop: idx === 0 ? "none" : "1px solid var(--color-border)",
+                  }}
+                >
                   {disabled ? (
-                    <span
-                      style={{
-                        display: "inline-block",
-                        padding: "2px var(--space-sm)",
-                        borderRadius: "var(--radius-full)",
-                        background: "var(--color-surface-muted)",
-                        color: "var(--color-ink-muted)",
-                        fontSize: "var(--font-size-sm)",
-                      }}
-                    >
-                      Désactivé{row.disabledAt ? ` le ${formatDate(row.disabledAt)}` : ""}
-                    </span>
+                    <StatusPill tone="muted">
+                      Désactivé{row.disabledAt ? ` · ${formatDate(row.disabledAt)}` : ""}
+                    </StatusPill>
                   ) : (
-                    <span
-                      style={{
-                        display: "inline-block",
-                        padding: "2px var(--space-sm)",
-                        borderRadius: "var(--radius-full)",
-                        background: "var(--color-surface-muted)",
-                        color: "var(--color-success)",
-                        fontSize: "var(--font-size-sm)",
-                      }}
-                    >
-                      Actif
-                    </span>
+                    <StatusPill tone="success">Actif</StatusPill>
                   )}
                 </td>
                 <td
                   style={{
-                    padding: "var(--space-sm) var(--space-md)",
+                    ...CELL,
+                    borderTop: idx === 0 ? "none" : "1px solid var(--color-border)",
                     textAlign: "right",
                   }}
                 >
@@ -138,6 +171,7 @@ export function RestaurantTable({ rows, onEdit, onDisable, onEnable }: Props) {
                     style={{
                       display: "inline-flex",
                       gap: "var(--space-xs)",
+                      justifyContent: "flex-end",
                     }}
                   >
                     <Button type="button" variant="outline" size="sm" onClick={() => onEdit(row)}>
@@ -169,7 +203,7 @@ export function RestaurantTable({ rows, onEdit, onDisable, onEnable }: Props) {
           })}
         </tbody>
       </table>
-    </div>
+    </DataCard>
   );
 }
 

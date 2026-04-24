@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { FooterDisclaimer } from "@/components/footer-disclaimer";
 import { getServerSession } from "@/lib/get-server-session";
+import { AdminHeader } from "./_components/admin-header";
 import { AdminSidebar } from "./_components/admin-sidebar";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
@@ -16,52 +17,46 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         minHeight: "100dvh",
         background: "var(--color-bg)",
         display: "grid",
-        gridTemplateColumns: "minmax(0, 1fr)",
-        gridTemplateRows: "64px 1fr auto",
+        gridTemplateRows: "64px 1fr",
+        gridTemplateColumns: "260px 1fr",
+        gridTemplateAreas: `"sidebar header" "sidebar main"`,
       }}
     >
-      <header
-        role="banner"
+      <aside
+        aria-label="Navigation latérale"
         style={{
-          height: "64px",
-          background: "var(--color-surface)",
-          borderBottom: "1px solid var(--color-border)",
+          gridArea: "sidebar",
+          background: "var(--color-surface-muted)",
+          borderRight: "1px solid var(--color-border)",
           display: "flex",
-          alignItems: "center",
-          paddingInline: "var(--space-xl)",
-          fontWeight: "var(--font-weight-semibold)",
-          zIndex: "var(--z-nav)",
+          flexDirection: "column",
+          minHeight: 0,
         }}
       >
-        Guide Foodie Journey — Administration
-      </header>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "240px 1fr",
-        }}
-      >
-        <aside
-          aria-label="Navigation latérale"
-          style={{
-            background: "var(--color-surface-muted)",
-            borderRight: "1px solid var(--color-border)",
-            minHeight: "100%",
-          }}
-        >
-          <AdminSidebar />
-        </aside>
-        <main
-          id="main"
-          role="main"
-          style={{
-            padding: "var(--space-xl)",
-          }}
-        >
-          {children}
-          <FooterDisclaimer align="left" />
-        </main>
+        <AdminSidebar />
+      </aside>
+
+      <div style={{ gridArea: "header" }}>
+        <AdminHeader user={session.user} />
       </div>
+
+      <main
+        id="main"
+        style={{
+          gridArea: "main",
+          padding: "var(--space-xl)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "var(--space-xl)",
+          maxWidth: 1320,
+          width: "100%",
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xl)", flex: 1 }}>
+          {children}
+        </div>
+        <FooterDisclaimer align="left" />
+      </main>
     </div>
   );
 }

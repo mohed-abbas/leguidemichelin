@@ -108,3 +108,43 @@ export const AdminUsersListResponse = z.object({
   total: z.number().int().nonnegative(),
 });
 export type AdminUsersListResponseType = z.infer<typeof AdminUsersListResponse>;
+
+// ─── Rewards admin (CRUD over Reward model) ─────────────────────────────
+
+export const AdminRewardResponse = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string().nullable(),
+  pointsCost: z.number().int().nonnegative(),
+  imageKey: z.string().nullable(),
+  active: z.boolean(),
+  redemptionCount: z.number().int().nonnegative(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type AdminRewardResponseType = z.infer<typeof AdminRewardResponse>;
+
+export const AdminRewardsListResponse = z.object({
+  items: z.array(AdminRewardResponse),
+});
+export type AdminRewardsListResponseType = z.infer<typeof AdminRewardsListResponse>;
+
+export const AdminRewardCreate = z.object({
+  title: z.string().min(1).max(160),
+  description: z.string().max(800).nullable().optional(),
+  pointsCost: z.number().int().min(0).max(1_000_000),
+  imageKey: z.string().max(400).nullable().optional(),
+  active: z.boolean().optional(),
+});
+export type AdminRewardCreateType = z.infer<typeof AdminRewardCreate>;
+
+export const AdminRewardPatch = z
+  .object({
+    title: z.string().min(1).max(160).optional(),
+    description: z.string().max(800).nullable().optional(),
+    pointsCost: z.number().int().min(0).max(1_000_000).optional(),
+    imageKey: z.string().max(400).nullable().optional(),
+    active: z.boolean().optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: "at least one field required" });
+export type AdminRewardPatchType = z.infer<typeof AdminRewardPatch>;

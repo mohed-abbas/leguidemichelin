@@ -37,8 +37,12 @@
   --color-destructive: #991b1b;
   --color-destructive-fg: #ffffff;
   --color-success: #166534;
+  --color-success-bg: #e7efe9; /* admin StatusPill success tone (≈ rgba(22,101,52,.10)) */
   --color-warning: #854d0e;
+  --color-warning-bg: #f3ede2; /* admin StatusPill warning tone (≈ rgba(133,77,14,.10)) */
   --color-info: #1e40af;
+  --color-info-bg: #e6e9f4; /* admin StatusPill info tone (≈ rgba(30,64,175,.10)) */
+  --color-destructive-bg: #f4e7e7; /* admin StatusPill destructive tone (≈ rgba(153,27,27,.08)) */
   --color-focus-ring: oklch(0.6 0.2 27);
 
   /* ─── Typography — Roboto (designer's pick) ──────────────────────────── */
