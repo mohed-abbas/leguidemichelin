@@ -1,6 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { RestaurantResponseType } from "@repo/shared-schemas";
+import { serverApi } from "@/lib/server-api";
 import { HomeMapPreview } from "./_components/HomeMapPreview";
+import { NewStarsList } from "./_components/NewStarsList";
 
 interface RecentRestaurant {
   id: string;
@@ -16,7 +19,17 @@ const RECENT: RecentRestaurant[] = [
   { id: "4", name: "Bistrot là-Haut", thumb: "/images/accueil/recent/4.png" },
 ];
 
-export default function DinerHomePage() {
+export default async function DinerHomePage() {
+  let newStars: RestaurantResponseType[] = [];
+  try {
+    const data = await serverApi.get<{ items: RestaurantResponseType[] }>(
+      "/restaurants?stars=THREE,TWO",
+    );
+    newStars = data.items;
+  } catch {
+    // network/API failure — render empty state via NewStarsList
+  }
+
   return (
     <div style={{ paddingTop: "88px" }}>
       <h1
@@ -283,6 +296,7 @@ export default function DinerHomePage() {
         >
           France 2026
         </p>
+        <NewStarsList restaurants={newStars} />
       </section>
     </div>
   );
