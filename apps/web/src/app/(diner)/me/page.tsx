@@ -1,51 +1,51 @@
-import { getServerSession } from "@/lib/get-server-session";
-import { LogoutButton } from "@/components/logout-button";
+import { AccountList } from "./_components/AccountList";
 
-export default async function MePage() {
-  const session = await getServerSession();
-  const name = session?.user.name ?? "";
-  const email = session?.user.email ?? "";
+export default function MePage() {
+  const sha = process.env.NEXT_PUBLIC_BUILD_SHA ?? "dev";
+  const shortSha = sha.slice(0, 7);
 
   return (
     <section
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: "var(--space-lg)",
-        padding: "var(--space-lg) 0",
+        paddingTop: "var(--space-lg)",
+        paddingBottom: "calc(85px + env(safe-area-inset-bottom) + var(--space-lg))",
       }}
     >
       <h1
         style={{
-          fontSize: "var(--font-size-lg)",
-          fontWeight: "var(--font-weight-semibold)",
           margin: 0,
+          paddingInline: 14,
+          marginBottom: 36,
+          fontFamily: "var(--font-sans)",
+          fontSize: "var(--font-size-h1)",
+          fontWeight: "var(--font-weight-regular)",
+          color: "var(--color-ink)",
+          lineHeight: "normal",
         }}
       >
-        Mon compte
+        Compte
       </h1>
-      <div
+
+      <AccountList />
+
+      <p
         style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "var(--space-xs)",
-          padding: "var(--space-md)",
-          background: "var(--color-surface)",
-          border: "1px solid var(--color-border)",
-          borderRadius: "var(--radius-md)",
+          margin: 0,
+          marginTop: 36,
+          paddingInline: 16,
+          fontFamily: "var(--font-sans)",
+          fontSize: 17,
+          fontWeight: "var(--font-weight-regular)",
+          color: "var(--color-ink)",
+          lineHeight: "normal",
         }}
       >
-        <span style={{ fontWeight: "var(--font-weight-semibold)" }}>{name}</span>
-        <span
-          style={{
-            color: "var(--color-ink-muted)",
-            fontSize: "var(--font-size-sm)",
-          }}
-        >
-          {email}
-        </span>
-      </div>
-      <LogoutButton redirectTo="/login" />
+        Version build {shortSha}
+      </p>
     </section>
   );
 }
+
+export const metadata = { title: "Compte — Guide Foodie Journey" };
