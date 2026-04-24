@@ -4,13 +4,26 @@ import { useState } from "react";
 
 import { BadgeRow } from "./BadgeRow";
 import { CollectionList } from "./CollectionList";
+import { ExperiencesPanel } from "./ExperiencesPanel";
 import { RewardCard } from "./RewardCard";
 import { StarCountHero } from "./StarCountHero";
+import type { BestExperienceChip } from "./BestExperiencesGrid";
+import type { ExperienceCardData } from "./ExperienceCard";
 import type { CollectionItem } from "../_data";
 
 type Tab = "etoiles" | "experiences";
 
-export function ChasseurTabs({ items, starCount }: { items: CollectionItem[]; starCount: number }) {
+export function ChasseurTabs({
+  items,
+  starCount,
+  bestExperiences,
+  experiences,
+}: {
+  items: CollectionItem[];
+  starCount: number;
+  bestExperiences: BestExperienceChip[];
+  experiences: ExperienceCardData[];
+}) {
   const [tab, setTab] = useState<Tab>("etoiles");
 
   return (
@@ -62,18 +75,8 @@ export function ChasseurTabs({ items, starCount }: { items: CollectionItem[]; st
           <RewardCard />
         </section>
       ) : (
-        <section
-          id="tabpanel-experiences"
-          role="tabpanel"
-          style={{
-            padding: "64px 16px",
-            textAlign: "center",
-            color: "var(--color-ink-muted)",
-            fontFamily: "var(--font-sans)",
-            fontSize: 15,
-          }}
-        >
-          Bientôt disponible.
+        <section id="tabpanel-experiences" role="tabpanel">
+          <ExperiencesPanel bestExperiences={bestExperiences} experiences={experiences} />
         </section>
       )}
     </div>

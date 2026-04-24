@@ -7,7 +7,12 @@ import type {
 
 import { ChasseurHeader } from "./_components/ChasseurHeader";
 import { ChasseurTabs } from "./_components/ChasseurTabs";
-import { priceTierFromRating, type CollectionItem } from "./_data";
+import {
+  buildBestExperienceChips,
+  buildExperienceCards,
+  priceTierFromRating,
+  type CollectionItem,
+} from "./_data";
 
 const API_INTERNAL = process.env.API_INTERNAL_URL ?? "http://localhost:3001";
 
@@ -77,6 +82,13 @@ export default async function ChasseurPage() {
   const items = buildCollectionItems(data.items, menus);
   const starCount = data.items.length;
 
+  const totalDishesByRestaurant = new Map<string, number>();
+  for (const [id, menu] of menus.entries()) {
+    if (menu) totalDishesByRestaurant.set(id, menu.dishes.length);
+  }
+  const bestExperiences = buildBestExperienceChips(data.items);
+  const experiences = buildExperienceCards(data.items, totalDishesByRestaurant);
+
   return (
     <div
       style={{
@@ -85,7 +97,12 @@ export default async function ChasseurPage() {
       }}
     >
       <ChasseurHeader />
-      <ChasseurTabs items={items} starCount={starCount} />
+      <ChasseurTabs
+        items={items}
+        starCount={starCount}
+        bestExperiences={bestExperiences}
+        experiences={experiences}
+      />
     </div>
   );
 }
