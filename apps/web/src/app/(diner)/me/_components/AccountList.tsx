@@ -29,7 +29,7 @@ type Row =
 
 const ROWS: readonly Row[] = [
   { kind: "link", label: "Votre compte", href: "/soon" },
-  { kind: "link", label: "Chasseur d’étoiles", href: "/soon" },
+  { kind: "link", label: "Chasseur d’étoiles", href: "/chasseur" },
   { kind: "link", label: "Informations générales", href: "/soon" },
   { kind: "link", label: "Newsletter", href: "/soon" },
   { kind: "link", label: "Programme Plus", href: "/soon" },
