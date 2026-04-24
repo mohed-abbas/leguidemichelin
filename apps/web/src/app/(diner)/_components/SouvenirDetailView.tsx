@@ -28,17 +28,13 @@ function formatFrenchDate(iso: string): string {
   return `${d.getDate()} ${MONTHS_FR[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-function badgeFor(id: string): { src: string; alt: string } {
-  const isVegan = id.charCodeAt(0) % 2 === 0;
-  return isVegan
-    ? { src: "/images/chasseur/badge-vegan-delices-figma.svg", alt: "VEGAN délices" }
-    : { src: "/images/chasseur/badge-smiley.svg", alt: "Expérience validée" };
-}
-
 export function SouvenirDetailView({ souvenir }: { souvenir: SouvenirResponseType }) {
   const router = useRouter();
   const caption = souvenir.note?.trim() || souvenir.dishName;
-  const badge = badgeFor(souvenir.id);
+  // Rating mark follows the Figma node 72:838 layout (smiley + score + flower
+  // stamp at bottom-right of the card). Placeholder literal until the review
+  // aggregation is joined onto the souvenir response.
+  const ratingLabel = "5/5";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", paddingBottom: 32 }}>
@@ -132,12 +128,12 @@ export function SouvenirDetailView({ souvenir }: { souvenir: SouvenirResponseTyp
           {formatFrenchDate(souvenir.createdAt)} · {souvenir.restaurantCity}
         </span>
 
-        {/* Polaroid card */}
+        {/* Polaroid card — Figma node 72:838 */}
         <div
           style={{
             position: "relative",
             marginTop: 24,
-            height: 380,
+            height: 325,
             background: "var(--color-surface)",
             borderRadius: 2,
             boxShadow: "var(--shadow-card)",
@@ -171,7 +167,7 @@ export function SouvenirDetailView({ souvenir }: { souvenir: SouvenirResponseTyp
               top: 13,
               left: 16,
               right: 15,
-              height: 260,
+              height: 219,
               overflow: "hidden",
               borderRadius: 2,
             }}
@@ -188,13 +184,13 @@ export function SouvenirDetailView({ souvenir }: { souvenir: SouvenirResponseTyp
             />
           </div>
 
-          {/* Handwritten caption */}
+          {/* Handwritten caption (bottom-left) */}
           <div
             style={{
               position: "absolute",
-              top: 288,
+              top: 248,
               left: 25,
-              right: 18,
+              right: 110,
               maxHeight: 66,
               overflow: "hidden",
             }}
@@ -205,7 +201,7 @@ export function SouvenirDetailView({ souvenir }: { souvenir: SouvenirResponseTyp
                 fontFamily: "var(--font-handwriting), cursive",
                 fontSize: 20,
                 fontWeight: 400,
-                lineHeight: "22px",
+                lineHeight: "24px",
                 color: "var(--color-ink)",
                 whiteSpace: "pre-wrap",
                 display: "-webkit-box",
@@ -218,24 +214,46 @@ export function SouvenirDetailView({ souvenir }: { souvenir: SouvenirResponseTyp
             </p>
           </div>
 
-          {/* Floating themed badge */}
+          {/* Rating mark (bottom-right) — smiley + N/N + flower stamp */}
           <div
-            aria-hidden
             style={{
               position: "absolute",
-              top: -35,
-              right: -10,
-              width: 93,
-              height: 93,
-              zIndex: 3,
-              pointerEvents: "none",
+              right: 18,
+              bottom: 14,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+              gap: 4,
             }}
           >
             <img
-              src={badge.src}
-              alt={badge.alt}
-              style={{ width: "100%", height: "100%", objectFit: "contain" }}
+              src="/images/chasseur/badge-smiley.svg"
+              alt="Expérience validée"
+              width={24}
+              height={24}
+              style={{ display: "block" }}
             />
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                fontFamily: "var(--font-sans)",
+                fontSize: 14,
+                fontWeight: "var(--font-weight-bold)",
+                color: "var(--color-ink)",
+                lineHeight: "16.2px",
+              }}
+            >
+              {ratingLabel}
+              <Image
+                src="/images/chasseur/icon-flower-stamp.svg"
+                alt=""
+                width={14}
+                height={16}
+                aria-hidden
+              />
+            </span>
           </div>
         </div>
 
@@ -265,12 +283,22 @@ export function SouvenirDetailView({ souvenir }: { souvenir: SouvenirResponseTyp
             style={{
               fontFamily: "var(--font-sans)",
               fontSize: "var(--font-size-lg)",
-              fontWeight: "var(--font-weight-semibold)",
-              color: "var(--color-accent-gold)",
+              fontWeight: "var(--font-weight-bold)",
+              color: "var(--color-primary)",
               fontVariantNumeric: "tabular-nums",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
             }}
           >
             +{souvenir.pointsAwarded}
+            <Image
+              src="/images/chasseur/icon-star-mini-red.svg"
+              alt=""
+              width={14}
+              height={16}
+              aria-hidden
+            />
           </strong>
         </div>
 
