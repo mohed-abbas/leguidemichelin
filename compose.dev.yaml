@@ -83,10 +83,14 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-foodie}:${POSTGRES_PASSWORD:-foodie}@postgres:5432/${POSTGRES_DB:-foodie}?schema=public
       SEED_API_BASE: "http://api:3001"
       BETTER_AUTH_URL: "http://localhost:3000"
+      # Must match the api container so seed writes fixture images into the
+      # same volume the api reads from (see apps/api/src/storage.ts BASE_DIR).
+      STORAGE_DIR: /var/data/images
     command: sh -c "npm install --ignore-scripts --no-audit --no-fund && npm run db:seed"
     volumes:
       - ./:/workspace:cached
       - node_modules_root:/workspace/node_modules
+      - images-dev-data:/var/data/images
     depends_on:
       api:
         condition: service_healthy

@@ -9,13 +9,56 @@
  *
  * Run via: npm run db:seed
  */
-import { readFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { copyFile, mkdir, readFile, readdir } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { prisma } from "../src/index.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SEED_DIR = join(__dirname, "..", "..", "..", "tools", "scrape", "seed-data");
+const SEED_IMAGES_DIR = join(SEED_DIR, "images");
+
+// Mirrors apps/api/src/storage.ts BASE_DIR: the seed must write into the same
+// volume the API reads from (compose.dev.yaml mounts images-dev-data to both).
+const STORAGE_DIR = resolve(process.env.STORAGE_DIR ?? "/var/data/images");
+
+// 5 restaurant + 5 dish fixtures cycled deterministically across all rows.
+const RESTAURANT_IMAGE_COUNT = 5;
+const DISH_IMAGE_COUNT = 5;
+const restaurantImageKey = (i: number): string =>
+  `restaurants/seed/r${(i % RESTAURANT_IMAGE_COUNT) + 1}.jpg`;
+const dishImageKey = (i: number): string => `dishes/seed/d${(i % DISH_IMAGE_COUNT) + 1}.jpg`;
+
+/**
+ * Copy bundled fixture images (tools/scrape/seed-data/images/{restaurants,dishes}/*.jpg)
+ * into STORAGE_DIR under their canonical keys so the API's /api/images/<key>
+ * handler can serve them. Idempotent: overwrites on re-run.
+ */
+async function copyFixtureImages(): Promise<void> {
+  const targets: Array<{ sub: "restaurants" | "dishes"; keyPrefix: string }> = [
+    { sub: "restaurants", keyPrefix: "restaurants/seed" },
+    { sub: "dishes", keyPrefix: "dishes/seed" },
+  ];
+  for (const t of targets) {
+    const srcDir = join(SEED_IMAGES_DIR, t.sub);
+    const dstDir = join(STORAGE_DIR, t.keyPrefix);
+    let entries: string[];
+    try {
+      entries = await readdir(srcDir);
+    } catch (err) {
+      console.warn(`[seed] fixture images missing at ${srcDir} — skipping copy (${String(err)})`);
+      return;
+    }
+    await mkdir(dstDir, { recursive: true });
+    let copied = 0;
+    for (const name of entries) {
+      if (!name.toLowerCase().endsWith(".jpg")) continue;
+      await copyFile(join(srcDir, name), join(dstDir, name));
+      copied++;
+    }
+    console.log(`[seed] copied ${copied} ${t.sub} fixture images → ${dstDir}`);
+  }
+}
 
 interface RestaurantFixture {
   michelinSlug: string;
@@ -65,7 +108,16 @@ async function loadRestaurants(): Promise<RestaurantFixture[]> {
 async function main() {
   const restaurants = await loadRestaurants();
 
-  for (const r of restaurants) {
+  // Copy bundled hero/dish images into STORAGE_DIR before DB rows reference them.
+  await copyFixtureImages();
+
+  // Stable dish-image cursor across all restaurants: keeps dish images
+  // distributed evenly even when some restaurants already have dishes seeded.
+  let dishImageCursor = 0;
+
+  for (let rIdx = 0; rIdx < restaurants.length; rIdx++) {
+    const r = restaurants[rIdx]!;
+    const heroKey = r.heroImageKey ?? restaurantImageKey(rIdx);
     const upserted = await prisma.restaurant.upsert({
       where: { michelinSlug: r.michelinSlug },
       create: {
@@ -78,7 +130,7 @@ async function main() {
         lng: r.lng,
         michelinRating: r.michelinRating,
         cuisine: r.cuisine,
-        heroImageKey: r.heroImageKey,
+        heroImageKey: heroKey,
       },
       update: {
         name: r.name,
@@ -87,6 +139,7 @@ async function main() {
         lng: r.lng,
         michelinRating: r.michelinRating,
         cuisine: r.cuisine,
+        heroImageKey: heroKey,
       },
     });
 
@@ -102,7 +155,21 @@ async function main() {
             description: null,
             priceCents: basePriceCents(r.michelinRating),
             sortOrder: i,
+            defaultImageKey: dishImageKey(dishImageCursor++),
           },
+        });
+      }
+    } else {
+      // Backfill imageKey on existing dishes that were seeded before fixture images existed.
+      const missing = await prisma.dish.findMany({
+        where: { restaurantId: upserted.id, defaultImageKey: null },
+        select: { id: true },
+        orderBy: { sortOrder: "asc" },
+      });
+      for (const d of missing) {
+        await prisma.dish.update({
+          where: { id: d.id },
+          data: { defaultImageKey: dishImageKey(dishImageCursor++) },
         });
       }
     }
