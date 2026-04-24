@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import { serverApi } from "@/lib/server-api";
 import { RestaurantDetailHero } from "../_components/restaurant-detail-hero";
-import { RestaurantActionCards } from "../_components/restaurant-action-cards";
 import { RestaurantReviewersRow } from "../_components/restaurant-reviewers-row";
 import { RestaurantScanCta } from "../_components/restaurant-scan-cta";
+import { RestaurantMenuList } from "../_components/restaurant-menu-list";
+import { RestaurantInfoCard } from "@/app/(diner)/map/_components/RestaurantInfoCard";
 import type { RestaurantMenuResponseType } from "@repo/shared-schemas";
 import { ApiError } from "@/lib/api";
 
@@ -26,7 +27,7 @@ export default async function RestaurantDetailPage({ params }: PageProps) {
 
   if (!data) notFound();
 
-  const { restaurant } = data;
+  const { restaurant, dishes } = data;
 
   return (
     <div
@@ -34,7 +35,6 @@ export default async function RestaurantDetailPage({ params }: PageProps) {
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: "20px",
         paddingBottom: "24px",
         background: "var(--color-bg)",
         minHeight: "100%",
@@ -43,57 +43,55 @@ export default async function RestaurantDetailPage({ params }: PageProps) {
       <style>
         {`[data-auth-surface] :where(button,a,input):focus-visible{outline:2px solid var(--color-primary);outline-offset:2px;border-radius:inherit;}`}
       </style>
+
       <RestaurantDetailHero restaurant={restaurant} />
 
-      <header
+      {/* Floating summary card overlapping the hero's bottom edge.
+          Reuses the map surface's RestaurantInfoCard as-is — emblem, name,
+          city/cuisine, thumbnail, and the 4-icon action row replace the
+          previous h1 block + RestaurantActionCards tiles. */}
+      <div
         style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "2px",
           paddingInline: "16px",
+          marginTop: "-60px",
+          position: "relative",
+          zIndex: 1,
         }}
       >
-        <h1
+        <RestaurantInfoCard
+          restaurant={restaurant}
+          closable={false}
+          isFavorited={restaurant.isFavorited ?? false}
+        />
+      </div>
+
+      <div style={{ marginTop: "20px" }}>
+        <RestaurantReviewersRow />
+      </div>
+
+      <section
+        style={{
+          marginTop: "24px",
+          paddingInline: "16px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+        }}
+      >
+        <h2
           style={{
             margin: 0,
             fontFamily: "var(--font-sans)",
-            fontSize: "24px",
-            fontWeight: "var(--font-weight-regular)",
+            fontSize: "var(--font-size-h2)",
+            fontWeight: "var(--font-weight-medium)",
             color: "var(--color-ink)",
-            lineHeight: "normal",
+            lineHeight: "var(--line-height-lg)",
           }}
         >
-          {restaurant.name}
-        </h1>
-        <p
-          style={{
-            margin: 0,
-            fontFamily: "var(--font-sans)",
-            fontSize: "13px",
-            lineHeight: "17px",
-            color: "var(--color-ink)",
-          }}
-        >
-          {restaurant.address}, {restaurant.city}
-        </p>
-        {restaurant.cuisine && (
-          <p
-            style={{
-              margin: 0,
-              fontFamily: "var(--font-sans)",
-              fontSize: "13px",
-              lineHeight: "17px",
-              color: "var(--color-ink)",
-            }}
-          >
-            {restaurant.cuisine}
-          </p>
-        )}
-      </header>
-
-      <RestaurantActionCards />
-
-      <RestaurantReviewersRow />
+          Menu
+        </h2>
+        <RestaurantMenuList dishes={dishes} />
+      </section>
 
       <RestaurantScanCta restaurantId={restaurant.id} />
     </div>

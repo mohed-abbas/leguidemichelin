@@ -63,17 +63,23 @@ export function RestaurantInfoCard({
   restaurant,
   showScore = false,
   closable = true,
+  isFavorited,
   variant = "map",
 }: Props) {
   // Hooks rules: call useMapStore unconditionally. Ignore the returned setter
   // when variant === "favorites" (favorites surface must not write map state —
   // D-F2).
   const setSelected = useMapStore((s) => s.setSelectedRestaurant);
-  // Single subscription for favorite state via the shared hook. Plan 06 also
-  // returns `hydrated`, but this card doesn't need it (no SSR seed path on the
-  // map canvas). Never add a second useFavoritesStore subscription here —
-  // funnel everything through useFavoriteToggle.
-  const { favorited, toggle, isPending } = useFavoriteToggle(restaurant.id);
+  // Single subscription for favorite state via the shared hook. `hydrated`
+  // gates the flicker-free fallback for SSR surfaces that pass `isFavorited`
+  // (e.g. /restaurants/[id] — SPEC Req 7). Never add a second
+  // useFavoritesStore subscription here — funnel everything through
+  // useFavoriteToggle.
+  const { favorited, toggle, isPending, hydrated } = useFavoriteToggle(restaurant.id);
+  // Until the client store hydrates, fall back to the server-seeded
+  // `isFavorited` (if provided). Prevents the false→true flicker on the
+  // detail page when a diner refreshes a restaurant they've favorited.
+  const displayFavorited = hydrated ? favorited : (isFavorited ?? favorited);
   const emblem = emblemFromRating(restaurant.michelinRating);
   const emblemSrc = EMBLEM_SRC[emblem];
   const multiplier = targetFromRating(restaurant.michelinRating);
@@ -329,15 +335,15 @@ export function RestaurantInfoCard({
           <button
             type="button"
             onClick={toggle}
-            aria-label={favorited ? "Retirer des favoris" : "Ajouter aux favoris"}
-            aria-pressed={favorited}
+            aria-label={displayFavorited ? "Retirer des favoris" : "Ajouter aux favoris"}
+            aria-pressed={displayFavorited}
             aria-busy={isPending || undefined}
             style={{
               ...actionBtnStyle,
               // 24px icon + 10px padding each side = 44px touch target
               // (UI-SPEC §2).
               padding: 10,
-              color: favorited ? "var(--color-primary)" : "inherit",
+              color: displayFavorited ? "var(--color-primary)" : "inherit",
               opacity: isPending ? 0.6 : 1,
               pointerEvents: isPending ? "none" : "auto",
               background: "transparent",
@@ -345,7 +351,7 @@ export function RestaurantInfoCard({
               cursor: "pointer",
             }}
           >
-            <Heart size={18} aria-hidden fill={favorited ? "currentColor" : "none"} />
+            <Heart size={18} aria-hidden fill={displayFavorited ? "currentColor" : "none"} />
           </button>
         </div>
       </div>
