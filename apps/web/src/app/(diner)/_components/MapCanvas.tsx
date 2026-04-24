@@ -187,18 +187,25 @@ export function MapCanvas() {
       type: "symbol" as const,
       filter: ["!", ["has", "point_count"]],
       layout: {
-        // Pin variant is purely a function of the restaurant *type* — it does
-        // NOT change on visit count, on selection, or with Chasseur mode:
-        //   • Bib Gourmand (BIB)                 → pin-bib
-        //   • Starred (ONE / TWO / THREE)        → pin-starred
-        //   • Anything else / recommended        → pin-recommended (default)
+        // Pin colour follows the app's design system:
+        //   • default mode, un-selected  → red
+        //   • default mode, selected     → dark
+        //   • chasseur mode, un-selected → dark
+        //   • chasseur mode, selected    → red
+        // The selection/mode XOR is pre-computed into each feature's
+        // `colorVariant` prop below, so the layer only reads feature data.
         "icon-image": [
-          "case",
-          ["==", ["get", "variant"], "bib"],
-          "pin-bib",
-          ["==", ["get", "variant"], "flower"],
-          "pin-starred",
-          "pin-recommended",
+          "concat",
+          [
+            "case",
+            ["==", ["get", "variant"], "bib"],
+            "pin-bib",
+            ["==", ["get", "variant"], "flower"],
+            "pin-starred",
+            "pin-recommended",
+          ],
+          "-",
+          ["get", "colorVariant"],
         ] as unknown as string,
         "icon-size": 0.55,
         "icon-allow-overlap": true,
@@ -213,18 +220,24 @@ export function MapCanvas() {
     const map = mapRef.current?.getMap();
     if (!map) return;
     const variants = ["bib", "starred", "recommended"] as const;
+    const colors = ["red", "dark"] as const;
     variants.forEach((variant) => {
-      const img = new Image(63, 74);
-      img.onload = () => {
-        if (!map.hasImage(`pin-${variant}`)) {
-          map.addImage(`pin-${variant}`, img);
-          // Force a repaint so symbol layers referencing the just-registered
-          // image render on the next frame — avoids a blank-square flash when
-          // the bbox fetch resolves before the SVG finishes decoding.
-          map.triggerRepaint();
-        }
-      };
-      img.src = `/pins/pin-${variant}.svg`;
+      colors.forEach((color) => {
+        const id = `pin-${variant}-${color}`;
+        const img = new Image(63, 74);
+        img.onload = () => {
+          if (!map.hasImage(id)) {
+            map.addImage(id, img);
+            // Force a repaint so symbol layers referencing the just-registered
+            // image render on the next frame — avoids a blank-square flash when
+            // the bbox fetch resolves before the SVG finishes decoding.
+            map.triggerRepaint();
+          }
+        };
+        // `dark` variant uses the original (ink-filled) asset; `red` uses the
+        // primary-colour variant produced by swapping the inner circle fill.
+        img.src = color === "red" ? `/pins/pin-${variant}-red.svg` : `/pins/pin-${variant}.svg`;
+      });
     });
     // Kick off an initial bbox fetch so pins render at default zoom without
     // requiring a user gesture. Mapbox doesn't fire `moveend` on initial load.
@@ -290,20 +303,23 @@ export function MapCanvas() {
   const geojson = useMemo(
     () => ({
       type: "FeatureCollection" as const,
-      features: pins.map((r) => ({
-        type: "Feature" as const,
-        id: r.id,
-        properties: {
+      features: pins.map((r) => {
+        const isSelected = selectedRestaurant?.id === r.id;
+        // XOR: default+unselected or chasseur+selected → red; else dark.
+        const colorVariant = isSelected !== chasseurMode ? "red" : "dark";
+        return {
+          type: "Feature" as const,
           id: r.id,
-          // Pin variant drives the icon-image case expression in PIN_LAYER.
-          // Visit count / selection / chasseur mode no longer affect the pin
-          // itself — selection is signalled by the info card + badge state.
-          variant: emblemFromRating(r.michelinRating),
-        },
-        geometry: { type: "Point" as const, coordinates: [r.lng, r.lat] },
-      })),
+          properties: {
+            id: r.id,
+            variant: emblemFromRating(r.michelinRating),
+            colorVariant,
+          },
+          geometry: { type: "Point" as const, coordinates: [r.lng, r.lat] },
+        };
+      }),
     }),
-    [pins],
+    [pins, selectedRestaurant, chasseurMode],
   );
 
   // ── Token guard (after all hooks — rules of hooks) ────────────────────────

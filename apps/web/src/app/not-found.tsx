@@ -115,7 +115,7 @@ export default function NotFound() {
             }}
           >
             <Image
-              src="/pins/pin-starred.svg"
+              src="/pins/pin-starred-red.svg"
               alt=""
               width={63}
               height={74}

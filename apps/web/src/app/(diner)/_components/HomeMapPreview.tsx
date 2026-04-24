@@ -129,12 +129,14 @@ export function HomeMapPreview() {
     variants.forEach((variant) => {
       const img = new Image(63, 74);
       img.onload = () => {
+        // Default/preview surface always uses the red (primary) variant —
+        // no chasseur mode, no selection state here.
         if (!map.hasImage(`pin-${variant}`)) {
           map.addImage(`pin-${variant}`, img);
           map.triggerRepaint();
         }
       };
-      img.src = `/pins/pin-${variant}.svg`;
+      img.src = `/pins/pin-${variant}-red.svg`;
     });
     fetchPinsForCurrentBbox();
   }, [fetchPinsForCurrentBbox]);
