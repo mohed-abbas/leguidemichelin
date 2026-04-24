@@ -10,7 +10,8 @@
  *  - MoveEnd fetches GET /api/restaurants?bbox=... debounced 300ms — D-20
  *  - Bbox results cached in useMapStore via quantizeBbox keys — D-20
  *  - visitedSet hydrates once on mount when visitedDirty — D-21
- *  - Pin click opens RestaurantPopover; cluster click eases in — D-22
+ *  - Pin click writes selectedRestaurant → MapOverlay renders the
+ *    bottom RestaurantInfoCard; cluster click eases in — D-22
  *  - Missing NEXT_PUBLIC_MAPBOX_TOKEN → dev fallback card (no silent grey tiles)
  *
  * Canonical refs:
@@ -20,22 +21,19 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Map, { type MapRef, Source, Layer, Popup } from "react-map-gl/mapbox";
+import Map, { type MapRef, Source, Layer, Marker } from "react-map-gl/mapbox";
 import type { MapMouseEvent } from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { api } from "@/lib/api";
 import { useMapStore, quantizeBbox } from "../_stores/useMapStore";
 import type { RestaurantResponseType } from "@repo/shared-schemas";
-import { RestaurantPopover } from "./RestaurantPin";
 import { RecenterButton } from "./RecenterButton";
-
-// ─── Types ─────────────────────────────────────────────────────────────────
-
-interface PopupState {
-  lng: number;
-  lat: number;
-  restaurant: RestaurantResponseType;
-}
+import {
+  PinScoreBadge,
+  targetFromRating,
+  mockVisits,
+  emblemFromRating,
+} from "../map/_components/PinScoreBadge";
 
 // ─── Token-missing fallback (pure presentational, no hooks) ────────────────
 
@@ -75,22 +73,28 @@ export function MapCanvas() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── State ─────────────────────────────────────────────────────────────────
-  const [pins, setPins] = useState<RestaurantResponseType[]>([]);
-  const [popup, setPopup] = useState<PopupState | null>(null);
   const [center, setCenter] = useState<{ lng: number; lat: number; zoom: number }>({
     lng: 2.3522,
     lat: 48.8566,
-    zoom: 11,
+    zoom: 10,
   });
   // Cluster circle color read from CSS token once on mount — Mapbox paint
   // objects are plain JS data; they do not resolve CSS custom properties.
   // Initialize to empty string; the useEffect resolves the token before any
   // clusters appear (clusters require panning to low zoom).
   const [clusterColor, setClusterColor] = useState<string>("");
+  // Track current zoom so chasseur-mode badges only render when pins are
+  // un-clustered (above clusterMaxZoom). Below that, each "pin" is a cluster
+  // circle at an aggregate coord; a per-restaurant badge there would be wrong.
+  const [zoom, setZoom] = useState<number>(10);
 
   // ── Store hooks ───────────────────────────────────────────────────────────
-  const visitedSet = useMapStore((s) => s.visitedSet);
   const visitedDirty = useMapStore((s) => s.visitedDirty);
+  const chasseurMode = useMapStore((s) => s.chasseurMode);
+  const selectedRestaurant = useMapStore((s) => s.selectedRestaurant);
+  const setSelectedRestaurant = useMapStore((s) => s.setSelectedRestaurant);
+  const pins = useMapStore((s) => s.pins);
+  const setPins = useMapStore((s) => s.setPins);
 
   // ── Mount effects ─────────────────────────────────────────────────────────
 
@@ -118,9 +122,9 @@ export function MapCanvas() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { longitude, latitude } = pos.coords;
-        setCenter({ lng: longitude, lat: latitude, zoom: 13 });
+        setCenter({ lng: longitude, lat: latitude, zoom: 10 });
         // Re-center map if already loaded.
-        mapRef.current?.easeTo({ center: [longitude, latitude], zoom: 13, duration: 800 });
+        mapRef.current?.easeTo({ center: [longitude, latitude], zoom: 10, duration: 800 });
       },
       () => {
         // Error / denied / timeout — keep Paris default. No modal per D-18.
@@ -175,14 +179,22 @@ export function MapCanvas() {
       type: "symbol" as const,
       filter: ["!", ["has", "point_count"]],
       layout: {
+        // Pin variant is purely a function of the restaurant *type* — it does
+        // NOT change on visit count, on selection, or with Chasseur mode:
+        //   • Bib Gourmand (BIB)                 → pin-bib
+        //   • Starred (ONE / TWO / THREE)        → pin-starred
+        //   • Anything else / recommended        → pin-recommended (default)
         "icon-image": [
           "case",
-          ["get", "visited"],
-          "pin-visited",
-          "pin-unvisited",
+          ["==", ["get", "variant"], "bib"],
+          "pin-bib",
+          ["==", ["get", "variant"], "flower"],
+          "pin-starred",
+          "pin-recommended",
         ] as unknown as string,
-        "icon-size": 0.6,
+        "icon-size": 0.55,
         "icon-allow-overlap": true,
+        "icon-anchor": "bottom" as const,
       },
     }),
     [],
@@ -192,8 +204,9 @@ export function MapCanvas() {
   const onLoad = useCallback(() => {
     const map = mapRef.current?.getMap();
     if (!map) return;
-    (["visited", "unvisited"] as const).forEach((variant) => {
-      const img = new Image(48, 48);
+    const variants = ["bib", "starred", "recommended"] as const;
+    variants.forEach((variant) => {
+      const img = new Image(63, 74);
       img.onload = () => {
         if (!map.hasImage(`pin-${variant}`)) {
           map.addImage(`pin-${variant}`, img);
@@ -203,12 +216,17 @@ export function MapCanvas() {
           map.triggerRepaint();
         }
       };
-      img.src = `/pins/${variant}.svg`; // static assets from 04-01
+      img.src = `/pins/pin-${variant}.svg`;
     });
+    // Kick off an initial bbox fetch so pins render at default zoom without
+    // requiring a user gesture. Mapbox doesn't fire `moveend` on initial load.
+    onMoveEnd();
   }, []);
 
   // ── MoveEnd with 300ms debounce ───────────────────────────────────────────
   const onMoveEnd = useCallback(() => {
+    const map = mapRef.current?.getMap();
+    if (map) setZoom(map.getZoom());
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       const map = mapRef.current?.getMap();
@@ -231,7 +249,7 @@ export function MapCanvas() {
         // Swallow — keep current pins on network error
       }
     }, 300);
-  }, []);
+  }, [setPins]);
 
   // ── Click handler ─────────────────────────────────────────────────────────
   const handleClick = useCallback(
@@ -254,10 +272,10 @@ export function MapCanvas() {
         if (!id) return;
         const restaurant = pins.find((r) => r.id === id);
         if (!restaurant) return;
-        setPopup({ lng: e.lngLat.lng, lat: e.lngLat.lat, restaurant });
+        setSelectedRestaurant(restaurant);
       }
     },
-    [pins],
+    [pins, setSelectedRestaurant],
   );
 
   // ── GeoJSON source (memoized) ─────────────────────────────────────────────
@@ -267,11 +285,17 @@ export function MapCanvas() {
       features: pins.map((r) => ({
         type: "Feature" as const,
         id: r.id,
-        properties: { id: r.id, visited: visitedSet.has(r.id) },
+        properties: {
+          id: r.id,
+          // Pin variant drives the icon-image case expression in PIN_LAYER.
+          // Visit count / selection / chasseur mode no longer affect the pin
+          // itself — selection is signalled by the info card + badge state.
+          variant: emblemFromRating(r.michelinRating),
+        },
         geometry: { type: "Point" as const, coordinates: [r.lng, r.lat] },
       })),
     }),
-    [pins, visitedSet],
+    [pins],
   );
 
   // ── Token guard (after all hooks — rules of hooks) ────────────────────────
@@ -297,7 +321,7 @@ export function MapCanvas() {
         type="geojson"
         data={geojson}
         cluster={true}
-        clusterMaxZoom={14}
+        clusterMaxZoom={9}
         clusterRadius={50}
       >
         <Layer {...CLUSTER_LAYER} />
@@ -305,20 +329,32 @@ export function MapCanvas() {
         <Layer {...PIN_LAYER} />
       </Source>
 
-      {popup && (
-        <Popup
-          longitude={popup.lng}
-          latitude={popup.lat}
-          onClose={() => setPopup(null)}
-          closeOnClick={false}
-          anchor="bottom"
-        >
-          <RestaurantPopover
-            restaurant={popup.restaurant}
-            visited={visitedSet.has(popup.restaurant.id)}
-          />
-        </Popup>
-      )}
+      {/* Chasseur d'Étoiles badges — one per visible pin, shown only when
+          mode is ON and pins are un-clustered (zoom > clusterMaxZoom).
+          Selected badge flips to red-bg/white-text variant (Figma 24:641). */}
+      {chasseurMode && zoom > 9
+        ? pins.map((r) => {
+            const target = targetFromRating(r.michelinRating);
+            const visits = mockVisits(r.id, target);
+            return (
+              <Marker
+                key={`badge-${r.id}`}
+                longitude={r.lng}
+                latitude={r.lat}
+                anchor="bottom"
+                offset={[0, -38]}
+                style={{ pointerEvents: "none" }}
+              >
+                <PinScoreBadge
+                  visits={visits}
+                  target={target}
+                  icon={emblemFromRating(r.michelinRating)}
+                  selected={selectedRestaurant?.id === r.id}
+                />
+              </Marker>
+            );
+          })
+        : null}
 
       <RecenterButton
         onRecenter={(lng, lat) =>

@@ -1,0 +1,82 @@
+"use client";
+
+/**
+ * RestaurantListView — in-overlay list shown when the map/list toggle is
+ * flipped to list. Reuses `<RestaurantInfoCard>` for each row.
+ *
+ * Intentionally headerless: the map/list toggle button + Chasseur switch
+ * remain visible in `<MapOverlay>`'s floating control bar in *both* view
+ * modes, so this surface only owns the scrollable list. It slots in above
+ * the control bar and below the filter chips.
+ *
+ * Responsiveness:
+ *  - `position: absolute` with `inset` so it tracks the overlay container.
+ *  - Cards are width: 100% up to `--container-max` (768) so they stretch
+ *    on tablets instead of being pinned to the mobile 358px bottom-sheet
+ *    width.
+ *
+ * Data source: `pins` from `useMapStore` — the same set `<MapCanvas>` most
+ * recently fetched. No independent fetch. When `chasseurMode` is on each
+ * row's info card toggles its bottom-row score to visits/target.
+ */
+
+import { RestaurantInfoCard } from "./RestaurantInfoCard";
+import { useMapStore } from "../../_stores/useMapStore";
+
+export function RestaurantListView() {
+  const pins = useMapStore((s) => s.pins);
+  const chasseurMode = useMapStore((s) => s.chasseurMode);
+
+  return (
+    <div
+      role="region"
+      aria-label="Liste des restaurants"
+      style={{
+        position: "absolute",
+        left: 0,
+        right: 0,
+        top: "calc(env(safe-area-inset-top, 0px) + 92px + 37px + var(--space-md))",
+        bottom: "calc(env(safe-area-inset-bottom, 0px) + 44px + var(--space-md) + var(--space-md))",
+        overflowY: "auto",
+        WebkitOverflowScrolling: "touch",
+        padding: "0 var(--space-md) var(--space-md)",
+        pointerEvents: "auto",
+        background: "var(--color-surface-muted)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "var(--space-md)",
+          width: "100%",
+          maxWidth: 768,
+          marginInline: "auto",
+          paddingTop: "var(--space-md)",
+        }}
+      >
+        {pins.length === 0 ? (
+          <p
+            style={{
+              marginTop: "var(--space-xl)",
+              textAlign: "center",
+              color: "var(--color-ink-muted)",
+              fontSize: "var(--font-size-sm)",
+            }}
+          >
+            Aucun restaurant dans cette zone. Déplacez la carte pour explorer.
+          </p>
+        ) : (
+          pins.map((r) => (
+            <RestaurantInfoCard
+              key={r.id}
+              restaurant={r}
+              showScore={chasseurMode}
+              closable={false}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}

@@ -39,6 +39,36 @@ export function quantizeBbox(bbox: [number, number, number, number]): string {
 }
 
 interface MapState {
+  /** Chasseur d'Étoiles mode — when true, pins show their score multiplier badge. */
+  chasseurMode: boolean;
+  /** Toggle chasseur mode. */
+  setChasseurMode: (v: boolean) => void;
+
+  /**
+   * Restaurant selected from the map — drives the bottom info card in
+   * `<MapOverlay>` and the selected-pin highlight in `<MapCanvas>`. `null`
+   * means no selection (card hidden). Full object stored so the overlay can
+   * render without re-fetching or needing access to the MapCanvas pins list.
+   */
+  selectedRestaurant: RestaurantResponseType | null;
+  setSelectedRestaurant: (r: RestaurantResponseType | null) => void;
+
+  /**
+   * Currently-visible restaurants (result of the most recent bbox fetch).
+   * Lifted out of `<MapCanvas>` local state so `<RestaurantListView>` can
+   * render the same set without a second fetch or prop drill.
+   */
+  pins: RestaurantResponseType[];
+  setPins: (pins: RestaurantResponseType[]) => void;
+
+  /**
+   * Whether the bottom list view is open. Toggled by the list button in
+   * `<MapOverlay>`; the view overlays the map and reuses
+   * `<RestaurantInfoCard>` for each row.
+   */
+  listViewOpen: boolean;
+  setListViewOpen: (v: boolean) => void;
+
   /** Restaurant IDs the user has minted at least one souvenir for. */
   visitedSet: Set<string>;
   /**
@@ -85,6 +115,18 @@ interface MapState {
 const MAX_BBOX_ENTRIES = 20;
 
 export const useMapStore = create<MapState>((set, get) => ({
+  chasseurMode: false,
+  setChasseurMode: (v) => set({ chasseurMode: v }),
+
+  selectedRestaurant: null,
+  setSelectedRestaurant: (r) => set({ selectedRestaurant: r }),
+
+  pins: [],
+  setPins: (pins) => set({ pins }),
+
+  listViewOpen: false,
+  setListViewOpen: (v) => set({ listViewOpen: v }),
+
   visitedSet: new Set<string>(),
   visitedDirty: true,
   bboxCache: new Map<string, RestaurantResponseType[]>(),
