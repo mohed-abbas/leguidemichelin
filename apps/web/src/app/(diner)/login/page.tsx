@@ -1,162 +1,298 @@
 "use client";
 
-import { Suspense } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { LoginInput, type LoginInputType } from "@repo/shared-schemas";
-import { authClient } from "@/lib/auth-client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 
 /**
- * Validate the `next` param per D-08:
- *   - must startWith('/')
- *   - must NOT startWith('//') (protocol-relative URL defense)
- *   - must NOT include('://') (absolute URL defense)
- * Returns the safe path, or null.
+ * Diner entry — "S'inscrire ou se connecter" (Figma node 0:728).
+ *
+ * Pixel-accurate rebuild of the Figma frame (390 × 844). Spacing comes from
+ * absolute coordinates in the design; only Email is wired to the working
+ * auth flow for now — Apple / Google are placeholders until OAuth lands.
  */
-function safeNext(next: string | null): string | null {
-  if (!next) return null;
-  if (!next.startsWith("/")) return null;
-  if (next.startsWith("//")) return null;
-  if (next.includes("://")) return null;
-  return next;
-}
-
-function redirectByRole(role: string): string {
-  if (role === "RESTAURANT_STAFF") return "/portal/menu";
-  return "/";
-}
-
-function LoginForm() {
+export default function LoginChooserPage() {
   const router = useRouter();
-  const params = useSearchParams();
-  const form = useForm<LoginInputType>({
-    resolver: zodResolver(LoginInput),
-    defaultValues: { email: "", password: "" },
-    mode: "onBlur",
-  });
-
-  async function onSubmit(values: LoginInputType) {
-    const { data, error } = await authClient.signIn.email({
-      email: values.email,
-      password: values.password,
-    });
-    if (error || !data) {
-      toast.error("Email ou mot de passe incorrect.");
-      form.setError("password", { message: " " }); // marks field without duplicating copy
-      return;
-    }
-    const role = (data.user as { role?: string }).role ?? "DINER";
-    const next = safeNext(params.get("next"));
-    router.replace(next ?? redirectByRole(role));
-    // router.replace alone reuses the RSC payload, so async layouts that
-    // read the session keep serving their unauth branch. router.refresh
-    // re-fetches server components so the bottom nav / sidebar appear.
-    router.refresh();
-  }
 
   return (
-    <section
+    <div
       style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "var(--space-lg)",
-        padding: "var(--space-xl) var(--space-md)",
-        background: "var(--color-surface)",
-        borderRadius: "var(--radius-lg)",
-        boxShadow: "var(--shadow-sm)",
-        maxWidth: "420px",
+        position: "relative",
+        width: "100%",
+        maxWidth: "390px",
         marginInline: "auto",
-        marginBlock: "var(--space-xl)",
+        minHeight: "100dvh",
+        background: "var(--color-bg)",
+        overflow: "hidden",
       }}
     >
       <h1
         style={{
-          fontSize: "var(--font-size-xl)",
-          fontWeight: "var(--font-weight-semibold)",
           margin: 0,
+          position: "absolute",
+          top: "138px",
+          left: "16px",
+          right: "16px",
+          fontFamily: "var(--font-sans)",
+          fontWeight: "var(--font-weight-regular)",
+          fontSize: "22px",
+          lineHeight: "normal",
+          letterSpacing: "-0.5px",
+          color: "var(--color-ink)",
+          textAlign: "center",
         }}
       >
-        Connexion
+        S’inscrire ou se connecter
       </h1>
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "var(--space-md)",
-          }}
-          noValidate
-        >
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input type="email" autoComplete="email" inputMode="email" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Mot de passe</FormLabel>
-                <FormControl>
-                  <Input type="password" autoComplete="current-password" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? "Connexion…" : "Se connecter"}
-          </Button>
-        </form>
-      </Form>
+
       <p
         style={{
           margin: 0,
-          fontSize: "var(--font-size-sm)",
-          color: "var(--color-ink-muted)",
+          position: "absolute",
+          top: "180px",
+          left: "16px",
+          right: "16px",
+          fontFamily: "var(--font-sans)",
+          fontWeight: "var(--font-weight-regular)",
+          fontSize: "13px",
+          lineHeight: "17px",
+          color: "var(--color-ink)",
+          textAlign: "center",
+          whiteSpace: "pre-wrap",
         }}
       >
-        Pas encore de compte ?{" "}
-        <Link href="/signup" style={{ textDecoration: "underline" }}>
-          S’inscrire
-        </Link>
+        {"Vous inscrire vous permet de personnaliser votre\n"}
+        {"expérience, créer et sauvegarder des listes,\n"}
+        {"gérer vos réservations d’hôtels et plus encore."}
       </p>
-    </section>
+
+      <p
+        style={{
+          margin: 0,
+          position: "absolute",
+          top: "273px",
+          left: "58px",
+          right: "38px",
+          fontFamily: "var(--font-sans)",
+          fontWeight: "var(--font-weight-regular)",
+          fontSize: "13px",
+          lineHeight: "17px",
+          color: "var(--color-ink)",
+          textAlign: "center",
+        }}
+      >
+        Continuer avec :
+      </p>
+
+      <ChooserButton
+        label="Email"
+        icon={<EmailIcon />}
+        top={297}
+        onClick={() => router.push("/login/email")}
+        aria-label="Continuer avec Email"
+      />
+      <ChooserButton
+        label="Apple"
+        icon={<AppleIcon />}
+        top={365}
+        onClick={() => toast.info("Connexion Apple bientôt disponible.")}
+        aria-label="Continuer avec Apple"
+      />
+      <ChooserButton
+        label="Google"
+        icon={<GoogleIcon />}
+        top={433}
+        onClick={() => toast.info("Connexion Google bientôt disponible.")}
+        aria-label="Continuer avec Google"
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          top: "512px",
+          left: "58px",
+          right: "38px",
+          fontFamily: "var(--font-sans)",
+          fontWeight: "var(--font-weight-regular)",
+          fontSize: "13px",
+          lineHeight: "17px",
+          color: "var(--color-ink)",
+          textAlign: "center",
+        }}
+      >
+        <p style={{ margin: 0 }}>En m’inscrivant, j’accepte les</p>
+        <Link
+          href="/legal/terms"
+          style={{
+            textDecoration: "underline",
+            textDecorationSkipInk: "none",
+            color: "inherit",
+            display: "block",
+          }}
+        >
+          Conditions Générales
+        </Link>
+        <Link
+          href="/legal/privacy"
+          style={{
+            textDecoration: "underline",
+            textDecorationSkipInk: "none",
+            color: "inherit",
+            display: "block",
+          }}
+        >
+          Politique de confidentialité
+        </Link>
+      </div>
+
+      {/* Hero dish — anchored bottom-left so the photo always bleeds to the
+          viewport bottom on any height (Figma crop: x=-26, w=434, top=626,
+          image natively 435px tall but visible tail is the top ~218px). */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          top: "626px",
+          bottom: 0,
+          left: "-26px",
+          width: "434px",
+          pointerEvents: "none",
+          overflow: "hidden",
+        }}
+      >
+        <Image
+          src="/images/auth/hero-dish.png"
+          alt=""
+          fill
+          priority
+          style={{ objectFit: "cover", objectPosition: "top left" }}
+          sizes="434px"
+        />
+        <div
+          style={{
+            position: "absolute",
+            top: "49.5px" /* 675.5 - 626 */,
+            left: "42px" /* 16 - (-26) */,
+            width: "117px",
+            height: "51px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            fontFamily: "var(--font-sans)",
+            fontWeight: "var(--font-weight-medium)",
+            fontSize: "8px",
+            lineHeight: "normal",
+            color: "var(--color-watermark)",
+            letterSpacing: "0.02em",
+          }}
+        >
+          <span>THE RESTAURANT</span>
+          <span>ZURICH</span>
+        </div>
+      </div>
+    </div>
   );
 }
 
-/**
- * useSearchParams() forces a client-side bail-out during static generation,
- * so Next requires the consumer to live inside a Suspense boundary. The
- * fallback renders nothing (the form boots instantly on the client).
- */
-export default function LoginPage() {
+function ChooserButton({
+  label,
+  icon,
+  top,
+  onClick,
+  "aria-label": ariaLabel,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  top: number;
+  onClick: () => void;
+  "aria-label": string;
+}) {
   return (
-    <Suspense fallback={null}>
-      <LoginForm />
-    </Suspense>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      style={{
+        position: "absolute",
+        top: `${top}px`,
+        left: "48px",
+        width: "294px",
+        height: "54px",
+        background: "var(--color-surface)",
+        border: "none",
+        borderRadius: "25px",
+        boxShadow: "0 4px 19px 0 rgba(0, 0, 0, 0.03)",
+        cursor: "pointer",
+        padding: 0,
+        fontFamily: "var(--font-sans)",
+        fontWeight: "var(--font-weight-regular)",
+        fontSize: "16px",
+        lineHeight: "17px",
+        color: "var(--color-ink)",
+      }}
+    >
+      <span
+        aria-hidden
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "26px" /* ≈ 8.84% of 294 */,
+          transform: "translateY(-50%)",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "24px",
+          height: "24px",
+        }}
+      >
+        {icon}
+      </span>
+      <span
+        style={{
+          display: "block",
+          width: "100%",
+          textAlign: "center",
+        }}
+      >
+        {label}
+      </span>
+    </button>
+  );
+}
+
+function EmailIcon() {
+  return (
+    <img
+      src="/images/auth/icon-email.svg"
+      alt=""
+      width={24}
+      height={17}
+      style={{ display: "block" }}
+    />
+  );
+}
+
+function AppleIcon() {
+  return (
+    <img
+      src="/images/auth/icon-apple.svg"
+      alt=""
+      width={18}
+      height={21}
+      style={{ display: "block" }}
+    />
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <img
+      src="/images/auth/icon-google.svg"
+      alt=""
+      width={15}
+      height={15}
+      style={{ display: "block" }}
+    />
   );
 }

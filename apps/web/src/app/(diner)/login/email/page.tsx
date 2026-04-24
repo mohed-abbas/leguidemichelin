@@ -1,46 +1,58 @@
 "use client";
 
-import { useId } from "react";
+import { Suspense, useId } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { SignupInput, type SignupInputType } from "@repo/shared-schemas";
+import { LoginInput, type LoginInputType } from "@repo/shared-schemas";
 import { authClient } from "@/lib/auth-client";
 
-export default function SignupPage() {
+function safeNext(next: string | null): string | null {
+  if (!next) return null;
+  if (!next.startsWith("/")) return null;
+  if (next.startsWith("//")) return null;
+  if (next.includes("://")) return null;
+  return next;
+}
+
+function redirectByRole(role: string): string {
+  if (role === "RESTAURANT_STAFF") return "/portal/menu";
+  return "/";
+}
+
+function LoginForm() {
   const router = useRouter();
-  const form = useForm<SignupInputType>({
-    resolver: zodResolver(SignupInput),
-    defaultValues: { email: "", password: "", displayName: "" },
+  const params = useSearchParams();
+  const form = useForm<LoginInputType>({
+    resolver: zodResolver(LoginInput),
+    defaultValues: { email: "", password: "" },
     mode: "onBlur",
   });
 
-  async function onSubmit(values: SignupInputType) {
-    const { error } = await authClient.signUp.email({
+  async function onSubmit(values: LoginInputType) {
+    const { data, error } = await authClient.signIn.email({
       email: values.email,
       password: values.password,
-      name: values.displayName,
     });
-    if (error) {
-      const code = error.code ?? "";
-      if (code === "USER_ALREADY_EXISTS" || code === "EMAIL_TAKEN") {
-        form.setError("email", { message: "Cet email est déjà utilisé." });
-      } else {
-        toast.error(error.message ?? "Erreur lors de l’inscription.");
-      }
+    if (error || !data) {
+      toast.error("Email ou mot de passe incorrect.");
+      form.setError("password", { message: " " });
       return;
     }
-    router.replace("/");
+    const role = (data.user as { role?: string }).role ?? "DINER";
+    const next = safeNext(params.get("next"));
+    router.replace(next ?? redirectByRole(role));
     router.refresh();
   }
 
-  const displayNameError = form.formState.errors.displayName?.message;
   const emailError = form.formState.errors.email?.message;
   const passwordError = form.formState.errors.password?.message;
   const isSubmitting = form.formState.isSubmitting;
+  const nextParam = params.get("next");
+  const signupHref = nextParam ? `/signup?next=${encodeURIComponent(nextParam)}` : "/signup";
 
   return (
     <div
@@ -114,7 +126,7 @@ export default function SignupPage() {
             textAlign: "center",
           }}
         >
-          Créer un compte
+          Connexion
         </h1>
 
         <p
@@ -129,7 +141,7 @@ export default function SignupPage() {
             maxWidth: "280px",
           }}
         >
-          Commencez votre parcours étoilé et collectionnez vos souvenirs gastronomiques.
+          Retrouvez votre collection de souvenirs et continuez votre parcours étoilé.
         </p>
 
         <form
@@ -138,19 +150,12 @@ export default function SignupPage() {
           style={{
             width: "100%",
             maxWidth: "294px",
-            marginTop: "32px",
+            marginTop: "40px",
             display: "flex",
             flexDirection: "column",
             gap: "12px",
           }}
         >
-          <PillField
-            label="Nom affiché"
-            type="text"
-            autoComplete="name"
-            error={displayNameError}
-            register={form.register("displayName")}
-          />
           <PillField
             label="Email"
             type="email"
@@ -162,7 +167,7 @@ export default function SignupPage() {
           <PillField
             label="Mot de passe"
             type="password"
-            autoComplete="new-password"
+            autoComplete="current-password"
             error={passwordError}
             register={form.register("password")}
           />
@@ -189,7 +194,7 @@ export default function SignupPage() {
                 "transform 150ms var(--ease-standard), box-shadow 150ms var(--ease-standard), opacity 150ms var(--ease-standard)",
             }}
           >
-            {isSubmitting ? "Création…" : "S’inscrire"}
+            {isSubmitting ? "Connexion…" : "Se connecter"}
           </button>
 
           <div
@@ -206,9 +211,9 @@ export default function SignupPage() {
             }}
           >
             <p style={{ margin: 0 }}>
-              Déjà un compte ?{" "}
+              Pas encore de compte ?{" "}
               <Link
-                href="/login"
+                href={signupHref}
                 style={{
                   color: "var(--color-primary)",
                   textDecoration: "underline",
@@ -216,9 +221,19 @@ export default function SignupPage() {
                   fontWeight: "var(--font-weight-medium)",
                 }}
               >
-                Se connecter
+                S’inscrire
               </Link>
             </p>
+            <Link
+              href="/login"
+              style={{
+                color: "var(--color-ink-muted)",
+                textDecoration: "underline",
+                textDecorationSkipInk: "none",
+              }}
+            >
+              Autres moyens de connexion
+            </Link>
           </div>
         </form>
       </div>
@@ -272,7 +287,7 @@ export default function SignupPage() {
 
 interface PillFieldProps {
   label: string;
-  type: "email" | "password" | "text";
+  type: "email" | "password";
   autoComplete: string;
   inputMode?: "email";
   error: string | undefined;
@@ -367,5 +382,13 @@ function PillField({ label, type, autoComplete, inputMode, error, register }: Pi
         </p>
       )}
     </div>
+  );
+}
+
+export default function LoginEmailPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }
