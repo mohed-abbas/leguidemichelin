@@ -13,7 +13,7 @@
  *  │  [2x flower]                    [notes][✓][bkm][♥]  │
  *  └──────────────────────────────────────────────────────┘
  *
- * Clicking the card body navigates to /restaurants/:slug so this surface is
+ * Clicking the card body navigates to /restaurants/:id so this surface is
  * the single entry-point into the detail page from the map.
  *
  * The card reads `selectedRestaurant` from useMapStore — the map click handler
@@ -99,7 +99,7 @@ export function RestaurantInfoCard({ restaurant, showScore = false, closable = t
       {/* Tap-through target: the text block + photo link to the detail page.
           Excludes the action-row (owned by its own interactive children). */}
       <Link
-        href={`/restaurants/${restaurant.slug}`}
+        href={`/restaurants/${restaurant.id}`}
         aria-label={`Voir ${restaurant.name}`}
         style={{
           position: "absolute",
@@ -119,7 +119,7 @@ export function RestaurantInfoCard({ restaurant, showScore = false, closable = t
         alt=""
         width={18}
         height={21}
-        style={{ position: "absolute", top: 18, left: 16, display: "block" }}
+        style={{ position: "absolute", top: 18, left: 16, display: "block", pointerEvents: "none" }}
       />
 
       {/* ── Text block ─────────────────────────────────────────────────── */}
@@ -132,6 +132,7 @@ export function RestaurantInfoCard({ restaurant, showScore = false, closable = t
           display: "flex",
           flexDirection: "column",
           gap: 2,
+          pointerEvents: "none",
         }}
       >
         <h2
@@ -191,6 +192,7 @@ export function RestaurantInfoCard({ restaurant, showScore = false, closable = t
           borderRadius: 7,
           overflow: "hidden",
           background: "var(--color-surface-muted)",
+          pointerEvents: "none",
         }}
       >
         {restaurant.heroImageKey ? (
