@@ -115,14 +115,18 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
   }
 
   // ADMIN silo (D-02 Phase 3) — fires BEFORE portal/staff branches.
-  const isAdminPath = pathname.startsWith("/admin");
+  // Admin-scope paths cover BOTH UI (`/admin/*`) AND API (`/api/admin/*`) — otherwise
+  // authenticated admin client-fetches to `/api/admin/*` get 307-redirected to
+  // `/admin/dashboard` and return HTML instead of JSON.
+  const isAdminPath =
+    pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
   if (user.role === "ADMIN" && !isAdminPath) {
     const url = req.nextUrl.clone();
     url.pathname = "/admin/dashboard";
     url.search = "";
     return NextResponse.redirect(url, 307);
   }
-  // Non-ADMIN on /admin/* → send to their home
+  // Non-ADMIN on admin-scope → send to their home
   if (isAdminPath && user.role !== "ADMIN") {
     const url = req.nextUrl.clone();
     url.pathname = user.role === "RESTAURANT_STAFF" ? "/portal/menu" : "/";
@@ -130,8 +134,9 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(url, 307);
   }
 
-  // Role gate (D-11, Phase 2 preserved)
-  const isPortalPath = pathname.startsWith("/portal");
+  // Role gate (D-11, Phase 2 preserved) — portal scope covers UI + API symmetrically.
+  const isPortalPath =
+    pathname.startsWith("/portal") || pathname.startsWith("/api/portal");
   if (isPortalPath && user.role !== "RESTAURANT_STAFF") {
     const url = req.nextUrl.clone();
     url.pathname = "/";

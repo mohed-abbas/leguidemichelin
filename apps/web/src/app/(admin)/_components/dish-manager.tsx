@@ -38,19 +38,16 @@ export function DishManager({ restaurantId, initialDishes }: Props) {
   async function move(dish: DishResponseType, delta: -1 | 1) {
     const ordered = [...dishes].sort((a, b) => a.sortOrder - b.sortOrder);
     const idx = ordered.findIndex((d) => d.id === dish.id);
-    const swap = ordered[idx + delta];
-    if (!swap) return;
+    const targetIdx = idx + delta;
+    if (targetIdx < 0 || targetIdx >= ordered.length) return;
+    const next = ordered.slice();
+    [next[idx], next[targetIdx]] = [next[targetIdx], next[idx]];
     try {
-      const [a, b] = await Promise.all([
-        api.patch<DishResponseType>(`/admin/restaurants/${restaurantId}/dishes/${dish.id}`, {
-          sortOrder: swap.sortOrder,
-        }),
-        api.patch<DishResponseType>(`/admin/restaurants/${restaurantId}/dishes/${swap.id}`, {
-          sortOrder: dish.sortOrder,
-        }),
-      ]);
-      applyDish(a);
-      applyDish(b);
+      const res = await api.patch<{ dishes: DishResponseType[] }>(
+        `/admin/restaurants/${restaurantId}/dishes/reorder`,
+        { orderedIds: next.map((d) => d.id) },
+      );
+      setDishes([...res.dishes].sort((a, b) => a.sortOrder - b.sortOrder));
     } catch (err) {
       surfaceApiError(err);
     }

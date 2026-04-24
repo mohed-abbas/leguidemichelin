@@ -127,8 +127,14 @@ export function RestaurantDialog({ open, mode, onOpenChange, onSaved }: Props) {
               <Input
                 {...form.register("name", {
                   onChange: (e) => {
-                    if (mode?.kind === "create") {
-                      form.setValue("slug", slugify(e.target.value), { shouldDirty: true });
+                    // Auto-slugify only in create mode AND only if the user hasn't
+                    // manually edited the slug yet — otherwise typing more in the
+                    // name field would overwrite their custom slug (L-04).
+                    if (
+                      mode?.kind === "create" &&
+                      !form.formState.dirtyFields.slug
+                    ) {
+                      form.setValue("slug", slugify(e.target.value), { shouldDirty: false });
                     }
                   },
                 })}

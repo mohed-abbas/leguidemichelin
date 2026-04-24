@@ -66,6 +66,47 @@ export const dishService = {
   },
 
   /**
+   * Atomic reorder: accept an ordered list of dish ids belonging to restaurantId,
+   * and rewrite `sortOrder` as 0..N-1 in a single transaction.
+   *
+   * Contract:
+   *   - Rejects if any id in the list does not belong to restaurantId.
+   *   - Rejects if the list is not a complete permutation of the restaurant's
+   *     current dishes (length + set must match exactly). This prevents a
+   *     client-side stale list from silently dropping or duplicating rows.
+   *   - Normalizes `sortOrder` to dense 0..N-1 indices — eliminates drift from
+   *     duplicate or gap-filled values left by any earlier single-field PATCH.
+   */
+  async reorder(restaurantId: string, orderedIds: string[]) {
+    const current = await prisma.dish.findMany({
+      where: { restaurantId },
+      select: { id: true },
+    });
+    if (current.length !== orderedIds.length) {
+      throw new BusinessError(
+        "validation",
+        400,
+        "ordered list length does not match restaurant dish count",
+      );
+    }
+    const currentSet = new Set(current.map((d) => d.id));
+    for (const id of orderedIds) {
+      if (!currentSet.has(id)) {
+        throw new BusinessError("not_found", 404, "dish not found");
+      }
+    }
+    const orderedSet = new Set(orderedIds);
+    if (orderedSet.size !== orderedIds.length) {
+      throw new BusinessError("validation", 400, "ordered list contains duplicates");
+    }
+    return prisma.$transaction(
+      orderedIds.map((id, index) =>
+        prisma.dish.update({ where: { id }, data: { sortOrder: index } }),
+      ),
+    );
+  },
+
+  /**
    * Hard delete. Dish → Souvenir FK has no cascade; Prisma P2003 if referenced.
    * Phase 5 UI should warn; Phase 3 accepts the default Prisma error path.
    */
