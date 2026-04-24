@@ -30,6 +30,7 @@ export default async function RestaurantDetailPage({ params }: PageProps) {
 
   return (
     <div
+      data-auth-surface
       style={{
         display: "flex",
         flexDirection: "column",
@@ -39,6 +40,9 @@ export default async function RestaurantDetailPage({ params }: PageProps) {
         minHeight: "100%",
       }}
     >
+      <style>
+        {`[data-auth-surface] :where(button,a,input):focus-visible{outline:2px solid var(--color-primary);outline-offset:2px;border-radius:inherit;}`}
+      </style>
       <RestaurantDetailHero restaurant={restaurant} />
 
       <header
@@ -89,22 +93,7 @@ export default async function RestaurantDetailPage({ params }: PageProps) {
 
       <RestaurantActionCards />
 
-      <RestaurantReviewersRow likes={43} reviewers={12} />
-
-      <p
-        style={{
-          margin: 0,
-          paddingInline: "16px",
-          fontFamily: "var(--font-sans)",
-          fontSize: "17px",
-          lineHeight: "22px",
-          color: "var(--color-ink)",
-        }}
-      >
-        Ce restaurant d’hôtel de charme au cœur du Quartier latin propose une comfort food créative
-        servie dans un havre de calme : murs lambrissés, mobilier chiné, éclairage tamisé. La carte
-        courte change au fil des saisons et met en valeur les produits du marché.
-      </p>
+      <RestaurantReviewersRow />
 
       <RestaurantScanCta restaurantId={restaurant.id} />
     </div>

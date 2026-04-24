@@ -4,12 +4,14 @@ import { useState, type ReactNode } from "react";
 
 interface ActionCardProps {
   label: string;
-  active: boolean;
-  onToggle: () => void;
+  toggle?: { pressed: boolean; onToggle: () => void };
+  onClick?: () => void;
   children: ReactNode;
 }
 
-function ActionCard({ label, active, onToggle, children }: ActionCardProps) {
+function ActionCard({ label, toggle, onClick, children }: ActionCardProps) {
+  const pressed = toggle?.pressed ?? false;
+  const handleClick = toggle ? toggle.onToggle : onClick;
   return (
     <div
       style={{
@@ -22,8 +24,8 @@ function ActionCard({ label, active, onToggle, children }: ActionCardProps) {
     >
       <button
         type="button"
-        onClick={onToggle}
-        aria-pressed={active}
+        onClick={handleClick}
+        aria-pressed={toggle ? pressed : undefined}
         aria-label={label}
         style={{
           width: "100%",
@@ -37,7 +39,7 @@ function ActionCard({ label, active, onToggle, children }: ActionCardProps) {
           alignItems: "center",
           justifyContent: "center",
           padding: 0,
-          color: active ? "var(--color-primary)" : "var(--color-ink)",
+          color: pressed ? "var(--color-primary)" : "var(--color-ink)",
         }}
       >
         {children}
@@ -140,6 +142,7 @@ function ClipboardIcon() {
 }
 
 export function RestaurantActionCards() {
+  // TODO(phase 5): persist via /me/favorites, /me/saved, /me/visited — currently UI-only demo state.
   const [favori, setFavori] = useState(false);
   const [saved, setSaved] = useState(false);
   const [visited, setVisited] = useState(false);
@@ -152,16 +155,22 @@ export function RestaurantActionCards() {
         paddingInline: "16px",
       }}
     >
-      <ActionCard label="Favori" active={favori} onToggle={() => setFavori((v) => !v)}>
+      <ActionCard label="Favori" toggle={{ pressed: favori, onToggle: () => setFavori((v) => !v) }}>
         <HeartIcon filled={favori} />
       </ActionCard>
-      <ActionCard label="Enregistrer" active={saved} onToggle={() => setSaved((v) => !v)}>
+      <ActionCard
+        label="Enregistrer"
+        toggle={{ pressed: saved, onToggle: () => setSaved((v) => !v) }}
+      >
         <BookmarkIcon filled={saved} />
       </ActionCard>
-      <ActionCard label="Déja visité" active={visited} onToggle={() => setVisited((v) => !v)}>
+      <ActionCard
+        label="Déja visité"
+        toggle={{ pressed: visited, onToggle: () => setVisited((v) => !v) }}
+      >
         <CheckCircleIcon filled={visited} />
       </ActionCard>
-      <ActionCard label="Remarques" active={false} onToggle={() => {}}>
+      <ActionCard label="Remarques" onClick={() => {}}>
         <ClipboardIcon />
       </ActionCard>
     </div>

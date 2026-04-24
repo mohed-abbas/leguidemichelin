@@ -1,8 +1,9 @@
 "use client";
 
+import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 /**
@@ -13,10 +14,24 @@ import { toast } from "sonner";
  * auth flow for now — Apple / Google are placeholders until OAuth lands.
  */
 export default function LoginChooserPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginChooser />
+    </Suspense>
+  );
+}
+
+function LoginChooser() {
   const router = useRouter();
+  const params = useSearchParams();
+  const nextParam = params.get("next");
+  const emailHref = nextParam
+    ? `/login/email?next=${encodeURIComponent(nextParam)}`
+    : "/login/email";
 
   return (
     <div
+      data-auth-surface
       style={{
         position: "relative",
         width: "100%",
@@ -27,6 +42,9 @@ export default function LoginChooserPage() {
         overflow: "hidden",
       }}
     >
+      <style>
+        {`[data-auth-surface] :where(button,a,input):focus-visible{outline:2px solid var(--color-primary);outline-offset:2px;border-radius:inherit;}`}
+      </style>
       <h1
         style={{
           margin: 0,
@@ -89,7 +107,7 @@ export default function LoginChooserPage() {
         label="Email"
         icon={<EmailIcon />}
         top={297}
-        onClick={() => router.push("/login/email")}
+        onClick={() => router.push(emailHref)}
         aria-label="Continuer avec Email"
       />
       <ChooserButton

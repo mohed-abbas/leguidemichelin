@@ -56,6 +56,7 @@ function LoginForm() {
 
   return (
     <div
+      data-auth-surface
       style={{
         position: "relative",
         width: "100%",
@@ -68,6 +69,9 @@ function LoginForm() {
         flexDirection: "column",
       }}
     >
+      <style>
+        {`[data-auth-surface] :where(button,a,input):focus-visible{outline:2px solid var(--color-primary);outline-offset:2px;border-radius:inherit;}`}
+      </style>
       <Link
         href="/login"
         aria-label="Retour au choix de connexion"
@@ -306,7 +310,7 @@ function PillField({ label, type, autoComplete, inputMode, error, register }: Pi
           autoComplete={autoComplete}
           inputMode={inputMode}
           placeholder=" "
-          aria-invalid={!!error || undefined}
+          aria-invalid={hasError || undefined}
           aria-describedby={hasError ? `${id}-err` : undefined}
           {...register}
           style={{
