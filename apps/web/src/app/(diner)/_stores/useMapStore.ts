@@ -6,7 +6,11 @@
  * Holds:
  *  - `visitedSet<restaurantId>` — hydrated from GET /api/me/souvenirs on `/map`
  *    (and `<MapPreview />`) mount, flipped dirty after a successful mint (04-03).
- *    Pin styling branches on `visitedSet.has(id)` (D-21).
+ *    RESERVED for the visited-vs-unvisited pin badge layer (D-21) — MapCanvas
+ *    currently renders type-only pins (bib/starred/recommended); the visited
+ *    overlay is tracked for re-enablement (see review PR-6 H-1). Keeping the
+ *    slice hot in the store means the badge layer can be stacked without
+ *    re-plumbing the hydrate + dirty-flag dance.
  *  - `visitedDirty` flag — consumers dedupe `refreshVisited()` by checking this
  *    before calling. Flipped true by `markVisitedDirty()` (post-mint) and reset
  *    to false after a successful refetch.
@@ -39,6 +43,36 @@ export function quantizeBbox(bbox: [number, number, number, number]): string {
 }
 
 interface MapState {
+  /** Chasseur d'Étoiles mode — when true, pins show their score multiplier badge. */
+  chasseurMode: boolean;
+  /** Toggle chasseur mode. */
+  setChasseurMode: (v: boolean) => void;
+
+  /**
+   * Restaurant selected from the map — drives the bottom info card in
+   * `<MapOverlay>` and the selected-pin highlight in `<MapCanvas>`. `null`
+   * means no selection (card hidden). Full object stored so the overlay can
+   * render without re-fetching or needing access to the MapCanvas pins list.
+   */
+  selectedRestaurant: RestaurantResponseType | null;
+  setSelectedRestaurant: (r: RestaurantResponseType | null) => void;
+
+  /**
+   * Currently-visible restaurants (result of the most recent bbox fetch).
+   * Lifted out of `<MapCanvas>` local state so `<RestaurantListView>` can
+   * render the same set without a second fetch or prop drill.
+   */
+  pins: RestaurantResponseType[];
+  setPins: (pins: RestaurantResponseType[]) => void;
+
+  /**
+   * Whether the bottom list view is open. Toggled by the list button in
+   * `<MapOverlay>`; the view overlays the map and reuses
+   * `<RestaurantInfoCard>` for each row.
+   */
+  listViewOpen: boolean;
+  setListViewOpen: (v: boolean) => void;
+
   /** Restaurant IDs the user has minted at least one souvenir for. */
   visitedSet: Set<string>;
   /**
@@ -85,6 +119,18 @@ interface MapState {
 const MAX_BBOX_ENTRIES = 20;
 
 export const useMapStore = create<MapState>((set, get) => ({
+  chasseurMode: false,
+  setChasseurMode: (v) => set({ chasseurMode: v }),
+
+  selectedRestaurant: null,
+  setSelectedRestaurant: (r) => set({ selectedRestaurant: r }),
+
+  pins: [],
+  setPins: (pins) => set({ pins }),
+
+  listViewOpen: false,
+  setListViewOpen: (v) => set({ listViewOpen: v }),
+
   visitedSet: new Set<string>(),
   visitedDirty: true,
   bboxCache: new Map<string, RestaurantResponseType[]>(),

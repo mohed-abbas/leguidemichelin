@@ -10,6 +10,7 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 const PUBLIC_EXACT = new Set<string>([
   "/login",
+  "/login/email",
   "/signup",
   "/portal/login",
   "/manifest.webmanifest",
@@ -19,7 +20,7 @@ const PUBLIC_EXACT = new Set<string>([
 ]);
 
 const PUBLIC_PREFIXES = [
-  "/api/auth/", // Better Auth routes (session + sign-in + sign-up + sign-out)
+  "/api/", // All API routes — auth lives in Express (requireAuth + requireRole). Proxy is UX-only.
   "/_next/", // Next build assets + HMR
   "/icons/", // PWA icons
   "/serwist/", // Serwist assets (sw precache entries)
@@ -118,8 +119,7 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
   // Admin-scope paths cover BOTH UI (`/admin/*`) AND API (`/api/admin/*`) — otherwise
   // authenticated admin client-fetches to `/api/admin/*` get 307-redirected to
   // `/admin/dashboard` and return HTML instead of JSON.
-  const isAdminPath =
-    pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
+  const isAdminPath = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
   if (user.role === "ADMIN" && !isAdminPath) {
     const url = req.nextUrl.clone();
     url.pathname = "/admin/dashboard";
@@ -135,8 +135,7 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
   }
 
   // Role gate (D-11, Phase 2 preserved) — portal scope covers UI + API symmetrically.
-  const isPortalPath =
-    pathname.startsWith("/portal") || pathname.startsWith("/api/portal");
+  const isPortalPath = pathname.startsWith("/portal") || pathname.startsWith("/api/portal");
   if (isPortalPath && user.role !== "RESTAURANT_STAFF") {
     const url = req.nextUrl.clone();
     url.pathname = "/";

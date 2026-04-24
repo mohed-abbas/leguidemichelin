@@ -22,6 +22,7 @@
  */
 
 import dynamic from "next/dynamic";
+import { MapOverlay } from "./_components/MapOverlay";
 
 const MapCanvas = dynamic(() => import("../_components/MapCanvas").then((m) => m.MapCanvas), {
   ssr: false,
@@ -42,18 +43,20 @@ const MapCanvas = dynamic(() => import("../_components/MapCanvas").then((m) => m
 
 export default function MapPage() {
   return (
-    <div
-      aria-label="Carte des restaurants étoilés"
-      style={{
-        position: "fixed",
-        inset: 0,
-        top: "env(safe-area-inset-top, 0px)",
-        // leave room for the bottom nav (56px) + safe area
-        bottom: "calc(56px + env(safe-area-inset-bottom, 0px))",
-        zIndex: 1,
-      }}
-    >
-      <MapCanvas />
-    </div>
+    <>
+      <div
+        aria-label="Carte des restaurants étoilés"
+        style={{
+          position: "fixed",
+          inset: 0,
+          top: "env(safe-area-inset-top, 0px)",
+          bottom: "env(safe-area-inset-bottom, 0px)",
+          zIndex: 1,
+        }}
+      >
+        <MapCanvas />
+      </div>
+      <MapOverlay />
+    </>
   );
 }

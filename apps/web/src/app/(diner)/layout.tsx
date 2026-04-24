@@ -1,4 +1,4 @@
-import { DinerBottomNav } from "@/components/diner-bottom-nav";
+import { DinerNavShell } from "@/components/diner-nav-shell";
 import { FooterDisclaimer } from "@/components/footer-disclaimer";
 import { getServerSession } from "@/lib/get-server-session";
 import type { ReactNode } from "react";
@@ -36,24 +36,7 @@ export default async function DinerLayout({ children }: { children: ReactNode })
         {children}
         <FooterDisclaimer align="center" />
       </main>
-      {showNav ? (
-        <nav
-          aria-label="Primary"
-          style={{
-            position: "fixed",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: "calc(85px + env(safe-area-inset-bottom))",
-            paddingBottom: "env(safe-area-inset-bottom)",
-            background: "var(--color-bg)",
-            boxShadow: "var(--shadow-nav-top)",
-            zIndex: "var(--z-nav)",
-          }}
-        >
-          <DinerBottomNav />
-        </nav>
-      ) : null}
+      {showNav ? <DinerNavShell /> : null}
     </div>
   );
 }

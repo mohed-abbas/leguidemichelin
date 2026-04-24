@@ -25,6 +25,10 @@
   --color-ink-subtle: #888888; /* Gray — links / tertiary */
   --color-placeholder: #aaaaaa; /* Silver Chalice */
   --color-border: #e8e2db; /* warm neutral border */
+  --color-chip-muted-bg: #f9f7f5; /* inactive filter chip (Nouveau) */
+  --color-chip-muted-fg: #aca7a1; /* inactive filter chip text */
+  --color-chasseur-track: #bbbbbb; /* Mode Chasseur d'Étoiles switch track (off) */
+  --color-watermark: #cccbcb; /* low-contrast watermark label over imagery (login hero) */
   --color-primary: #ba0b2f; /* Red_Michelin */
   --color-primary-fg: #ffffff;
   --color-accent-gold: #d4af37;
