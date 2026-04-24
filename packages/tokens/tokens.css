@@ -29,6 +29,7 @@
   --color-chip-muted-fg: #aca7a1; /* inactive filter chip text */
   --color-chasseur-track: #bbbbbb; /* Mode Chasseur d'Étoiles switch track (off) */
   --color-watermark: #cccbcb; /* low-contrast watermark label over imagery (login hero) */
+  --color-photo-mat: #d9d9d9; /* neutral photo-frame mat (onboarding step 4) */
   --color-primary: #ba0b2f; /* Red_Michelin */
   --color-primary-fg: #ffffff;
   --color-accent-gold: #d4af37;
