@@ -5,10 +5,6 @@ import type { ReactNode } from "react";
 
 export default async function DinerLayout({ children }: { children: ReactNode }) {
   const session = await getServerSession();
-  // Hide the diner bottom nav on public gateways (/login, /signup) where
-  // the viewer is unauthenticated — the proxy role gate redirects logged-in
-  // staff away from diner routes, so the only time there's no session here
-  // is on the public login/signup screens.
   const showNav = session?.user.role === "DINER";
   return (
     <div
@@ -31,11 +27,10 @@ export default async function DinerLayout({ children }: { children: ReactNode })
         role="main"
         style={{
           flex: 1,
-          paddingInline: "var(--space-md)",
-          paddingBlock: "var(--space-lg)",
-          maxWidth: "768px",
           width: "100%",
+          maxWidth: "768px",
           marginInline: "auto",
+          paddingBottom: showNav ? "calc(85px + env(safe-area-inset-bottom))" : undefined,
         }}
       >
         {children}
@@ -45,9 +40,14 @@ export default async function DinerLayout({ children }: { children: ReactNode })
         <nav
           aria-label="Primary"
           style={{
-            height: "56px",
-            background: "var(--color-surface-muted)",
+            position: "fixed",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: "calc(85px + env(safe-area-inset-bottom))",
             paddingBottom: "env(safe-area-inset-bottom)",
+            background: "var(--color-bg)",
+            boxShadow: "var(--shadow-nav-top)",
             zIndex: "var(--z-nav)",
           }}
         >

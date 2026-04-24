@@ -1,11 +1,5 @@
+import Link from "next/link";
 import type { RestaurantResponseType } from "@repo/shared-schemas";
-
-const STAR_LABELS: Record<string, string> = {
-  BIB: "Bib Gourmand 🍽",
-  ONE: "1 étoile ⭐",
-  TWO: "2 étoiles ⭐⭐",
-  THREE: "3 étoiles ⭐⭐⭐",
-};
 
 interface RestaurantDetailHeroProps {
   restaurant: RestaurantResponseType;
@@ -13,85 +7,61 @@ interface RestaurantDetailHeroProps {
 
 export function RestaurantDetailHero({ restaurant: r }: RestaurantDetailHeroProps) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-      <div
-        style={{
-          height: "220px",
-          background: "var(--color-surface-muted)",
-          borderRadius: "var(--radius-lg)",
-          overflow: "hidden",
-        }}
-      >
-        {r.heroImageKey ? (
-          <img
-            src={`/api/images/${r.heroImageKey}`}
-            alt={`Photo de ${r.name}`}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        ) : (
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "var(--font-size-xl)",
-              color: "var(--color-ink-muted)",
-            }}
-          >
-            {r.name[0]}
-          </div>
-        )}
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+    <div style={{ position: "relative", width: "100%", aspectRatio: "390 / 396" }}>
+      {r.heroImageKey ? (
+        <img
+          src={`/api/images/${r.heroImageKey}`}
+          alt={`Photo de ${r.name}`}
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
+      ) : (
         <div
           style={{
+            width: "100%",
+            height: "100%",
+            background: "var(--color-surface-muted)",
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            gap: "var(--space-sm)",
-          }}
-        >
-          <h1
-            style={{
-              fontSize: "var(--font-size-xl)",
-              fontWeight: "var(--font-weight-semibold)",
-              margin: 0,
-            }}
-          >
-            {r.name}
-          </h1>
-          <span
-            style={{
-              background: "var(--color-surface-muted)",
-              border: "1px solid var(--color-border)",
-              borderRadius: "var(--radius-md)",
-              padding: "var(--space-xs) var(--space-sm)",
-              fontSize: "var(--font-size-sm)",
-              fontWeight: "var(--font-weight-semibold)",
-              flexShrink: 0,
-            }}
-          >
-            {STAR_LABELS[r.michelinRating]}
-          </span>
-        </div>
-        {r.cuisine && (
-          <span style={{ color: "var(--color-ink-muted)", fontSize: "var(--font-size-sm)" }}>
-            {r.cuisine}
-          </span>
-        )}
-        <address
-          style={{
-            fontStyle: "normal",
+            justifyContent: "center",
+            fontSize: "var(--font-size-h1)",
             color: "var(--color-ink-muted)",
-            fontSize: "var(--font-size-sm)",
           }}
         >
-          {r.address}, {r.city}
-        </address>
-      </div>
+          {r.name[0]}
+        </div>
+      )}
+
+      <Link
+        href="/restaurants"
+        aria-label="Retour"
+        style={{
+          position: "absolute",
+          top: "20px",
+          left: "16px",
+          width: "29px",
+          height: "29px",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "var(--color-surface)",
+          borderRadius: "var(--radius-full)",
+          textDecoration: "none",
+        }}
+      >
+        <svg
+          width="14"
+          height="11"
+          viewBox="0 0 15 12"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden
+        >
+          <path
+            d="M0.434315 6.56569C0.12189 6.25327 0.12189 5.74674 0.434315 5.43432L5.52548 0.343143C5.8379 0.0307242 6.34443 0.0307242 6.65685 0.343143C6.96927 0.655562 6.96927 1.1621 6.65685 1.47452L2.13137 6L6.65685 10.5255C6.96927 10.8379 6.96927 11.3444 6.65685 11.6569C6.34443 11.9693 5.8379 11.9693 5.52548 11.6569L0.434315 6.56569ZM15 6V6.8H1V6V5.2H15V6Z"
+            fill="var(--color-ink)"
+          />
+        </svg>
+      </Link>
     </div>
   );
 }
