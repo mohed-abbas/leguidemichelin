@@ -1,5 +1,4 @@
 import { AccountList } from "./_components/AccountList";
-import { MyContentList } from "./_components/MyContentList";
 
 export default function MePage() {
   const sha = process.env.NEXT_PUBLIC_BUILD_SHA ?? "dev";
@@ -28,8 +27,6 @@ export default function MePage() {
       >
         Compte
       </h1>
-
-      <MyContentList />
 
       <AccountList />
 

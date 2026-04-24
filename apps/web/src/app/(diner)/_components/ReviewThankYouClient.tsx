@@ -102,7 +102,7 @@ export function ThankYouClient() {
 
       {/* Primary CTA — "Toutes mes étoiles" (filled red) at top:599 */}
       <Link
-        href="/points"
+        href="/chasseur"
         style={{
           position: "absolute",
           top: 599,

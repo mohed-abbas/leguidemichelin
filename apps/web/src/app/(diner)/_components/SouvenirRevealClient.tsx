@@ -218,7 +218,7 @@ export function SouvenirRevealClient({ souvenir }: SouvenirRevealClientProps) {
               variant="outline"
               style={{ flex: 1 }}
               nativeButton={false}
-              render={<Link href="/collection" />}
+              render={<Link href="/chasseur" />}
             >
               Voir ma collection
             </Button>

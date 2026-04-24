@@ -36,7 +36,7 @@ export function RedeemConfirmDialog({
       toast.success(`Récompense obtenue — code : ${result.code}`);
       onRedeemed(balance - reward.pointsCost);
       onOpenChange(false);
-      router.push("/me/redemptions");
+      router.push("/chasseur");
     } catch (err) {
       if (err instanceof ApiError && err.code === "insufficient_balance") {
         setInsufficientMsg(

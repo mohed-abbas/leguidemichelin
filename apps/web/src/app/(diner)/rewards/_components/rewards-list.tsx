@@ -95,7 +95,7 @@ export function RewardsList({ rewards, initialBalance }: RewardsListProps) {
 
       <div style={{ paddingInline: 16, paddingTop: 20 }}>
         <Link
-          href="/me/redemptions"
+          href="/chasseur"
           style={{
             display: "inline-flex",
             alignItems: "center",

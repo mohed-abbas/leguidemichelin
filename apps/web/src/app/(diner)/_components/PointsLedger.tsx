@@ -59,7 +59,7 @@ function hrefFor(entry: PointTransactionResponseType): string | null {
     return `/souvenirs/${entry.souvenirId}`;
   }
   if (entry.source === "REDEMPTION") {
-    return "/me/redemptions";
+    return "/chasseur";
   }
   return null;
 }
