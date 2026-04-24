@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import gsap from "gsap";
@@ -12,14 +12,19 @@ import gsap from "gsap";
  * pops, and the progress moves to the third dash. Last narrative beat — next
  * screen starts the "how it works" flow.
  */
+const AUTO_ADVANCE_MS = 5000;
+
 export function StepThree() {
   const router = useRouter();
   const rootRef = useRef<HTMLDivElement>(null);
-  const [leaving, setLeaving] = useState(false);
+  const leavingRef = useRef(false);
 
   useEffect(() => {
     if (!rootRef.current) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const autoTimer = window.setTimeout(() => {
+      if (!leavingRef.current) advanceTo("/onboarding/4");
+    }, AUTO_ADVANCE_MS);
 
     const ctx = gsap.context(() => {
       if (reduced) {
@@ -55,12 +60,15 @@ export function StepThree() {
         .to("[data-anim='skip']", { opacity: 1, duration: 0.4 }, 2.0);
     }, rootRef);
 
-    return () => ctx.revert();
+    return () => {
+      window.clearTimeout(autoTimer);
+      ctx.revert();
+    };
   }, []);
 
   const advanceTo = (href: string) => {
-    if (leaving) return;
-    setLeaving(true);
+    if (leavingRef.current) return;
+    leavingRef.current = true;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) {
       router.push(href);

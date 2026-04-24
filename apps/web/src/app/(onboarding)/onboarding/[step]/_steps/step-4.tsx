@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import gsap from "gsap";
@@ -11,14 +11,19 @@ import gsap from "gsap";
  * A receipt-photo frame with two red viewfinder corner brackets. Teaches the
  * diner to photograph their ticket to validate a visit.
  */
+const AUTO_ADVANCE_MS = 5000;
+
 export function StepFour() {
   const router = useRouter();
   const rootRef = useRef<HTMLDivElement>(null);
-  const [leaving, setLeaving] = useState(false);
+  const leavingRef = useRef(false);
 
   useEffect(() => {
     if (!rootRef.current) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const autoTimer = window.setTimeout(() => {
+      if (!leavingRef.current) advanceTo("/onboarding/5");
+    }, AUTO_ADVANCE_MS);
 
     const ctx = gsap.context(() => {
       if (reduced) {
@@ -64,12 +69,15 @@ export function StepFour() {
         .to("[data-anim='skip']", { opacity: 1, duration: 0.4 }, 2.35);
     }, rootRef);
 
-    return () => ctx.revert();
+    return () => {
+      window.clearTimeout(autoTimer);
+      ctx.revert();
+    };
   }, []);
 
   const advanceTo = (href: string) => {
-    if (leaving) return;
-    setLeaving(true);
+    if (leavingRef.current) return;
+    leavingRef.current = true;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) {
       router.push(href);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import gsap from "gsap";
@@ -15,14 +15,19 @@ import gsap from "gsap";
  * the title rises in two beats (Deviens → Chasseur d'Étoiles) before
  * the body copy lands and the progress bar locks to step 1.
  */
+const AUTO_ADVANCE_MS = 5000;
+
 export function StepOne() {
   const router = useRouter();
   const rootRef = useRef<HTMLDivElement>(null);
-  const [leaving, setLeaving] = useState(false);
+  const leavingRef = useRef(false);
 
   useEffect(() => {
     if (!rootRef.current) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const autoTimer = window.setTimeout(() => {
+      if (!leavingRef.current) advanceTo("/onboarding/2");
+    }, AUTO_ADVANCE_MS);
 
     const ctx = gsap.context(() => {
       if (reduced) {
@@ -52,12 +57,15 @@ export function StepOne() {
         .to("[data-anim='skip']", { opacity: 1, duration: 0.4 }, 2.6);
     }, rootRef);
 
-    return () => ctx.revert();
+    return () => {
+      window.clearTimeout(autoTimer);
+      ctx.revert();
+    };
   }, []);
 
   const advanceTo = (href: string) => {
-    if (leaving) return;
-    setLeaving(true);
+    if (leavingRef.current) return;
+    leavingRef.current = true;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) {
       router.push(href);

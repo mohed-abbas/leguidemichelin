@@ -20,7 +20,8 @@ function safeNext(next: string | null): string | null {
 
 function redirectByRole(role: string): string {
   if (role === "RESTAURANT_STAFF") return "/portal/menu";
-  return "/";
+  if (role === "ADMIN") return "/admin/dashboard";
+  return "/onboarding";
 }
 
 function LoginForm() {
