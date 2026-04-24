@@ -25,6 +25,7 @@ import { Bookmark, Check, ClipboardList, Heart, X } from "lucide-react";
 import { EMBLEM_SRC, emblemFromRating, mockVisits, targetFromRating } from "./PinScoreBadge";
 import type { RestaurantResponseType } from "@repo/shared-schemas";
 import { useMapStore } from "../../_stores/useMapStore";
+import { useFavoriteToggle } from "../../_hooks/useFavoriteToggle";
 
 interface Props {
   restaurant: RestaurantResponseType;
@@ -40,10 +41,39 @@ interface Props {
    * is part of a scrollable list (the list has its own back button).
    */
   closable?: boolean;
+  /**
+   * Informational / SSR-seed flag for the favorited state. The store
+   * (useFavoriteToggle -> useFavoritesStore) remains the source of truth at
+   * runtime; this prop exists so that server-rendered surfaces can pass an
+   * initial hint without forcing a store subscription pre-hydration.
+   */
+  isFavorited?: boolean;
+  /**
+   * Surface variant (D-F2):
+   *  - "map"        (default) — full map info card with close button, Notes /
+   *    Visited / Bookmark action buttons and the PinScoreBadge slot.
+   *  - "favorites"  — reused on `/favorites` (Plan 09). Only the heart button
+   *    remains; close button + Notes / Visited / Bookmark are hidden; writes
+   *    to `useMapStore` are skipped.
+   */
+  variant?: "map" | "favorites";
 }
 
-export function RestaurantInfoCard({ restaurant, showScore = false, closable = true }: Props) {
+export function RestaurantInfoCard({
+  restaurant,
+  showScore = false,
+  closable = true,
+  variant = "map",
+}: Props) {
+  // Hooks rules: call useMapStore unconditionally. Ignore the returned setter
+  // when variant === "favorites" (favorites surface must not write map state —
+  // D-F2).
   const setSelected = useMapStore((s) => s.setSelectedRestaurant);
+  // Single subscription for favorite state via the shared hook. Plan 06 also
+  // returns `hydrated`, but this card doesn't need it (no SSR seed path on the
+  // map canvas). Never add a second useFavoritesStore subscription here —
+  // funnel everything through useFavoriteToggle.
+  const { favorited, toggle, isPending } = useFavoriteToggle(restaurant.id);
   const emblem = emblemFromRating(restaurant.michelinRating);
   const emblemSrc = EMBLEM_SRC[emblem];
   const multiplier = targetFromRating(restaurant.michelinRating);
@@ -71,8 +101,10 @@ export function RestaurantInfoCard({ restaurant, showScore = false, closable = t
       }}
     >
       {/* Close button — the sole exit when the user wants the card gone
-          without tapping a new pin. Hidden in list-view (closable=false). */}
-      {closable ? (
+          without tapping a new pin. Hidden in list-view (closable=false) and
+          on the /favorites variant (D-F2 — favorites surface must not write
+          map state). */}
+      {closable && variant !== "favorites" ? (
         <button
           type="button"
           aria-label="Fermer"
@@ -275,20 +307,45 @@ export function RestaurantInfoCard({ restaurant, showScore = false, closable = t
           <img src={emblemSrc} alt="" width={14} height={16} style={{ display: "block" }} />
         </div>
 
-        {/* Action icons (visual-only for now — wiring lands with Bookmarks /
-            Favorites / Notes features). */}
+        {/* Action icons. Notes / Visited / Bookmark remain visual-only (inert,
+            no onClick) per SPEC Req 8 — wiring lands with those features.
+            They are hidden entirely on the /favorites variant (D-F2) so only
+            the heart remains. The heart itself is fully wired through
+            useFavoriteToggle. */}
         <div style={{ display: "inline-flex", gap: 18, color: "var(--color-ink)" }}>
-          <button type="button" aria-label="Ajouter une note" style={actionBtnStyle}>
-            <ClipboardList size={18} aria-hidden />
-          </button>
-          <button type="button" aria-label="Marquer comme visité" style={actionBtnStyle}>
-            <Check size={18} aria-hidden />
-          </button>
-          <button type="button" aria-label="Ajouter aux signets" style={actionBtnStyle}>
-            <Bookmark size={18} aria-hidden />
-          </button>
-          <button type="button" aria-label="Ajouter aux favoris" style={actionBtnStyle}>
-            <Heart size={18} aria-hidden />
+          {variant !== "favorites" && (
+            <>
+              <button type="button" aria-label="Ajouter une note" style={actionBtnStyle}>
+                <ClipboardList size={18} aria-hidden />
+              </button>
+              <button type="button" aria-label="Marquer comme visité" style={actionBtnStyle}>
+                <Check size={18} aria-hidden />
+              </button>
+              <button type="button" aria-label="Ajouter aux signets" style={actionBtnStyle}>
+                <Bookmark size={18} aria-hidden />
+              </button>
+            </>
+          )}
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label={favorited ? "Retirer des favoris" : "Ajouter aux favoris"}
+            aria-pressed={favorited}
+            aria-busy={isPending || undefined}
+            style={{
+              ...actionBtnStyle,
+              // 24px icon + 10px padding each side = 44px touch target
+              // (UI-SPEC §2).
+              padding: 10,
+              color: favorited ? "var(--color-primary)" : "inherit",
+              opacity: isPending ? 0.6 : 1,
+              pointerEvents: isPending ? "none" : "auto",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            <Heart size={18} aria-hidden fill={favorited ? "currentColor" : "none"} />
           </button>
         </div>
       </div>
