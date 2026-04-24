@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * QrPasteUrl — tertiary tier of the /scan entry flow.
+ * QrPasteUrl — secondary (fallback) tier of the /scan entry flow.
  *
  * Wrapped in a native `<details>`/`<summary>` disclosure so it stays
  * visible-on-demand but out of the primary visual hierarchy (CONTEXT.md
@@ -41,19 +41,21 @@ export function QrPasteUrl() {
   return (
     <details
       style={{
-        borderRadius: "var(--radius-md)",
+        borderRadius: "var(--radius-lg)",
         border: "1px solid var(--color-border)",
         background: "var(--color-surface)",
-        padding: "var(--space-sm) var(--space-md)",
+        boxShadow: "var(--shadow-card)",
+        paddingInline: "var(--space-md)",
+        paddingBlock: "var(--space-sm)",
       }}
     >
       <summary
         style={{
           cursor: "pointer",
+          paddingBlock: "var(--space-xs)",
+          fontFamily: "var(--font-sans)",
           fontSize: "var(--font-size-sm)",
           color: "var(--color-ink-muted)",
-          paddingBlock: "var(--space-xs)",
-          listStyle: "revert",
         }}
       >
         Problème ? Coller l&apos;URL
@@ -64,6 +66,7 @@ export function QrPasteUrl() {
           display: "flex",
           gap: "var(--space-sm)",
           marginTop: "var(--space-sm)",
+          marginBottom: "var(--space-xs)",
         }}
       >
         <Input

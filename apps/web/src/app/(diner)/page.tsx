@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { QrCode } from "lucide-react";
 import type { RestaurantResponseType } from "@repo/shared-schemas";
 import { serverApi } from "@/lib/server-api";
 import { HomeMapPreview } from "./_components/HomeMapPreview";
@@ -32,19 +33,43 @@ export default async function DinerHomePage() {
 
   return (
     <div style={{ paddingTop: "88px" }}>
-      <h1
+      <div
         style={{
-          margin: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           paddingInline: "14px",
-          fontFamily: "var(--font-sans)",
-          fontWeight: "var(--font-weight-regular)",
-          fontSize: "var(--font-size-h1)",
-          lineHeight: "var(--line-height-tight)",
-          color: "var(--color-ink)",
+          gap: "var(--space-sm)",
         }}
       >
-        Restaurants
-      </h1>
+        <h1
+          style={{
+            margin: 0,
+            fontFamily: "var(--font-sans)",
+            fontWeight: "var(--font-weight-regular)",
+            fontSize: "var(--font-size-h1)",
+            lineHeight: "var(--line-height-tight)",
+            color: "var(--color-ink)",
+          }}
+        >
+          Restaurants
+        </h1>
+        <Link
+          href="/scan"
+          aria-label="Scanner un QR code"
+          style={{
+            display: "inline-grid",
+            placeItems: "center",
+            width: 44,
+            height: 44,
+            borderRadius: "var(--radius-md)",
+            color: "var(--color-ink)",
+            textDecoration: "none",
+          }}
+        >
+          <QrCode size={26} aria-hidden strokeWidth={1.75} />
+        </Link>
+      </div>
 
       {/* Search bar */}
       <form

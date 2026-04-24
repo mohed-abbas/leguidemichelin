@@ -20,8 +20,8 @@
  * Shape of a successful decode: onScan receives `IDetectedBarcode[]`; we
  * read `codes[0].rawValue` (the QR payload URL), run it through
  * `extractRestaurantId`, and push to `/scan/:id`. Unrecognized payloads toast
- * the user toward the upload or paste-URL fallbacks — we never land the user
- * on a broken `/scan/undefined` route.
+ * the user toward the paste-URL fallback — we never land the user on a
+ * broken `/scan/undefined` route.
  *
  * Canonical refs:
  *   - .planning/phases/04-frontend-parallel-wave/04-CONTEXT.md D-01, D-03.
@@ -32,6 +32,7 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { QrCode } from "lucide-react";
 import type { IDetectedBarcode } from "@yudiel/react-qr-scanner";
 import { extractRestaurantId } from "./scan-url";
 
@@ -53,14 +54,14 @@ export function QrScanner() {
       router.push(`/scan/${id}`);
       return;
     }
-    toast.error("QR non reconnu — essayez l'upload ou l'URL.");
+    toast.error("QR non reconnu — essayez l'URL.");
   }
 
   function onError(err: unknown) {
     // Scanner surfaces NotAllowedError, NotFoundError, etc. here; we log for
-    // dev diagnostics and fall the user back to the upload tier below.
+    // dev diagnostics and fall the user back to the paste-URL tier below.
     console.warn("scanner", err);
-    toast.error("Caméra indisponible. Utilisez l'upload.");
+    toast.error("Caméra indisponible. Essayez l'URL.");
   }
 
   if (!active) {
@@ -76,19 +77,29 @@ export function QrScanner() {
           minHeight: "280px",
           background: "var(--color-primary)",
           color: "var(--color-primary-fg)",
-          borderRadius: "var(--radius-lg)",
           border: "none",
-          fontSize: "var(--font-size-lg)",
-          fontWeight: "var(--font-weight-semibold)",
+          borderRadius: "var(--radius-lg)",
+          boxShadow: "var(--shadow-card)",
           cursor: "pointer",
-          padding: "var(--space-lg)",
+          padding: "var(--space-xl)",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          boxShadow: "var(--shadow-md)",
+          gap: "var(--space-md)",
+          fontFamily: "var(--font-sans)",
         }}
       >
-        Appuyez pour scanner
+        <QrCode size={56} strokeWidth={1.5} aria-hidden />
+        <span
+          style={{
+            fontSize: "var(--font-size-lg)",
+            fontWeight: "var(--font-weight-semibold)",
+            letterSpacing: "0.01em",
+          }}
+        >
+          Appuyez pour scanner
+        </span>
       </button>
     );
   }
@@ -101,6 +112,7 @@ export function QrScanner() {
         borderRadius: "var(--radius-lg)",
         overflow: "hidden",
         background: "var(--color-ink)",
+        boxShadow: "var(--shadow-card)",
       }}
     >
       <Scanner
