@@ -37,7 +37,7 @@ export function ChasseurSwitch({ active, onToggle }: Props) {
         flex: "0 1 296px",
         borderRadius: 35,
         border: "none",
-        background: active ? "var(--color-primary)" : "var(--color-chasseur-track)",
+        background: active ? "var(--color-primary)" : "var(--color-ink)",
         boxShadow: "0 4px 16px 0 rgb(0 0 0 / 0.25)",
         cursor: "pointer",
         padding: 0,
