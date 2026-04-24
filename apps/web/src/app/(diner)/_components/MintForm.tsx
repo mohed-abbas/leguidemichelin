@@ -21,7 +21,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Camera, RotateCcw, Star } from "lucide-react";
+import { Camera, Star } from "lucide-react";
 import { toast } from "sonner";
 import {
   SouvenirMintInput,
@@ -55,8 +55,8 @@ function MichelinStars({ rating }: { rating: RestaurantResponseType["michelinRat
       <span
         style={{
           fontSize: "var(--font-size-sm)",
-          color: "var(--color-accent-gold)",
-          fontWeight: "var(--font-weight-semibold)",
+          color: "var(--color-primary)",
+          fontWeight: "var(--font-weight-bold)",
         }}
       >
         Bib Gourmand
@@ -73,8 +73,8 @@ function MichelinStars({ rating }: { rating: RestaurantResponseType["michelinRat
         <Star
           key={i}
           size={14}
-          fill="var(--color-accent-gold)"
-          color="var(--color-accent-gold)"
+          fill="var(--color-primary)"
+          color="var(--color-primary)"
           aria-hidden
         />
       ))}
@@ -531,26 +531,73 @@ export function MintForm({ restaurant, menu }: MintFormProps) {
               </div>
             </button>
 
-            {/* Photo controls row */}
+            {/* Photo controls — two polaroid-pill tiles matching the card language */}
             <div style={{ display: "flex", gap: "var(--space-sm)" }}>
-              <Button
+              <button
                 type="button"
                 onClick={() => document.getElementById("mint-photo-input")?.click()}
-                style={{ flex: 1 }}
+                aria-pressed={Boolean(photo) && !useDefault}
+                style={{
+                  all: "unset",
+                  flex: 1,
+                  boxSizing: "border-box",
+                  height: 52,
+                  borderRadius: 12,
+                  background: "var(--color-primary)",
+                  color: "var(--color-primary-fg)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "var(--font-size-sm)",
+                  fontWeight: "var(--font-weight-bold)",
+                  boxShadow: "var(--shadow-card)",
+                  cursor: "pointer",
+                  textAlign: "center",
+                }}
               >
-                <Camera size={14} aria-hidden />
+                <Camera size={16} aria-hidden />
                 {photoButtonLabel}
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
-                variant="outline"
-                disabled={!selectedHasDefault}
                 onClick={handleUseDishDefault}
-                style={{ flex: 1 }}
+                disabled={!selectedHasDefault}
+                aria-pressed={useDefault}
+                style={{
+                  all: "unset",
+                  flex: 1,
+                  boxSizing: "border-box",
+                  height: 52,
+                  borderRadius: 12,
+                  background: "var(--color-surface)",
+                  color: selectedHasDefault ? "var(--color-ink)" : "var(--color-ink-subtle)",
+                  border: useDefault
+                    ? "2px solid var(--color-primary)"
+                    : "1px solid var(--color-border)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "var(--font-size-sm)",
+                  fontWeight: "var(--font-weight-bold)",
+                  boxShadow: "var(--shadow-card)",
+                  cursor: selectedHasDefault ? "pointer" : "not-allowed",
+                  opacity: selectedHasDefault ? 1 : 0.55,
+                  textAlign: "center",
+                }}
               >
-                <RotateCcw size={14} aria-hidden />
+                <Image
+                  src="/images/chasseur/icon-fork-knife-emblem.svg"
+                  alt=""
+                  width={12}
+                  height={18}
+                  aria-hidden
+                />
                 Photo du plat
-              </Button>
+              </button>
             </div>
             {!selectedHasDefault && (
               <p
