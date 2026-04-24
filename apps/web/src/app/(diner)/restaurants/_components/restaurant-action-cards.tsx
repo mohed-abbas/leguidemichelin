@@ -1,15 +1,17 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { useFavoriteToggle } from "../../_hooks/useFavoriteToggle";
 
 interface ActionCardProps {
   label: string;
   toggle?: { pressed: boolean; onToggle: () => void };
   onClick?: () => void;
+  pending?: boolean;
   children: ReactNode;
 }
 
-function ActionCard({ label, toggle, onClick, children }: ActionCardProps) {
+function ActionCard({ label, toggle, onClick, pending, children }: ActionCardProps) {
   const pressed = toggle?.pressed ?? false;
   const handleClick = toggle ? toggle.onToggle : onClick;
   return (
@@ -26,6 +28,7 @@ function ActionCard({ label, toggle, onClick, children }: ActionCardProps) {
         type="button"
         onClick={handleClick}
         aria-pressed={toggle ? pressed : undefined}
+        aria-busy={pending ? true : undefined}
         aria-label={label}
         style={{
           width: "100%",
@@ -40,6 +43,8 @@ function ActionCard({ label, toggle, onClick, children }: ActionCardProps) {
           justifyContent: "center",
           padding: 0,
           color: pressed ? "var(--color-primary)" : "var(--color-ink)",
+          opacity: pending ? 0.6 : 1,
+          pointerEvents: pending ? "none" : "auto",
         }}
       >
         {children}
@@ -141,10 +146,28 @@ function ClipboardIcon() {
   );
 }
 
-export function RestaurantActionCards() {
-  // TODO(phase 5): persist via /me/favorites, /me/saved, /me/visited — currently UI-only demo state.
-  const [favori, setFavori] = useState(false);
+interface RestaurantActionCardsProps {
+  initialFavorited: boolean;
+  restaurantId: string;
+}
+
+export function RestaurantActionCards({
+  initialFavorited,
+  restaurantId,
+}: RestaurantActionCardsProps) {
+  // Single hook call — reads favorited + hydrated from the store in one
+  // subscription (Plan 06 exposes hydrated on the hook return). Do NOT add a
+  // second store subscription for hydrated in this component.
+  const { favorited, toggle, isPending, hydrated } = useFavoriteToggle(restaurantId);
+
+  // Until the client store hydrates, fall back to the server-injected initial
+  // value so there's no false→true flicker on refresh for a favorited
+  // restaurant (SPEC Req 7).
+  const displayFavorited = hydrated ? favorited : initialFavorited;
+
+  // TODO(Phase 5+): wire Enregistrer (Bookmark) — requires Bookmark model + endpoints.
   const [saved, setSaved] = useState(false);
+  // TODO(Phase 5+): wire Déja visité (Visited) — requires Visited model or derive from souvenirs.
   const [visited, setVisited] = useState(false);
 
   return (
@@ -155,8 +178,12 @@ export function RestaurantActionCards() {
         paddingInline: "16px",
       }}
     >
-      <ActionCard label="Favori" toggle={{ pressed: favori, onToggle: () => setFavori((v) => !v) }}>
-        <HeartIcon filled={favori} />
+      <ActionCard
+        label="Favori"
+        toggle={{ pressed: displayFavorited, onToggle: toggle }}
+        pending={isPending}
+      >
+        <HeartIcon filled={displayFavorited} />
       </ActionCard>
       <ActionCard
         label="Enregistrer"
