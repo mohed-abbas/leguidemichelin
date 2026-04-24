@@ -2,21 +2,24 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UtensilsCrossed, QrCode } from "lucide-react";
+import { LayoutDashboard, UtensilsCrossed, QrCode } from "lucide-react";
 import { LogoutButton } from "@/components/logout-button";
 
 interface Item {
   href: string;
   label: string;
   Icon: typeof UtensilsCrossed;
+  exact?: boolean;
 }
 
 const ITEMS: Item[] = [
+  { href: "/portal", label: "Tableau de bord", Icon: LayoutDashboard, exact: true },
   { href: "/portal/menu", label: "Menu", Icon: UtensilsCrossed },
   { href: "/portal/qr", label: "QR Code", Icon: QrCode },
 ];
 
-function isActive(pathname: string, href: string): boolean {
+function isActive(pathname: string, href: string, exact?: boolean): boolean {
+  if (exact) return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -24,7 +27,6 @@ export function PortalSidebar() {
   const pathname = usePathname();
   return (
     <nav
-      aria-label="Navigation latérale"
       style={{
         display: "flex",
         flexDirection: "column",
@@ -44,7 +46,7 @@ export function PortalSidebar() {
         }}
       >
         {ITEMS.map((item) => {
-          const active = isActive(pathname, item.href);
+          const active = isActive(pathname, item.href, item.exact);
           return (
             <li key={item.href}>
               <Link
@@ -53,13 +55,16 @@ export function PortalSidebar() {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "var(--space-xs)",
-                  padding: "var(--space-xs) var(--space-sm)",
+                  gap: "var(--space-sm)",
+                  padding: "var(--space-sm) var(--space-md)",
                   borderRadius: "var(--radius-md)",
                   textDecoration: "none",
                   color: active ? "var(--color-ink)" : "var(--color-ink-muted)",
                   background: active ? "var(--color-surface)" : "transparent",
+                  border: active ? "1px solid var(--color-border)" : "1px solid transparent",
                   fontWeight: active ? "var(--font-weight-semibold)" : "var(--font-weight-regular)",
+                  fontSize: "var(--font-size-sm)",
+                  transition: "background var(--duration-fast) var(--ease-standard)",
                 }}
               >
                 <item.Icon size={18} aria-hidden />
