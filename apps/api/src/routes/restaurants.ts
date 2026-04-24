@@ -45,6 +45,7 @@ function toResponse(r: NonNullable<RestaurantRow>) {
     lng: decimalToNumber(r.lng),
     michelinRating: r.michelinRating,
     cuisine: r.cuisine,
+    description: r.description,
     heroImageKey: r.heroImageKey,
     createdAt: r.createdAt.toISOString(),
     updatedAt: r.updatedAt.toISOString(),

@@ -9,6 +9,7 @@
     "lng": 2.3289,
     "michelinRating": "BIB",
     "cuisine": "Bistronomique",
+    "description": "Minuscule bistrot de poche du 6e arrondissement où une cuisine française contemporaine et généreuse se décline sur une ardoise renouvelée au gré du marché.",
     "heroImageKey": null
   },
   {
@@ -21,6 +22,7 @@
     "lng": 2.3537,
     "michelinRating": "BIB",
     "cuisine": "Brasserie bretonne",
+    "description": "Institution bretonne du 10e où le kig ha farz, le homard du vivier et le kouign-amann défendent fièrement les couleurs du Finistère à deux pas de la gare du Nord.",
     "heroImageKey": null
   },
   {
@@ -33,6 +35,7 @@
     "lng": 2.3718,
     "michelinRating": "BIB",
     "cuisine": "Partage",
+    "description": "Adresse canaille et confidentielle du 11e qui décline petites assiettes à partager, produits sourcés et vins vivants dans une ambiance décontractée de bistrot de quartier.",
     "heroImageKey": null
   },
   {
@@ -45,6 +48,7 @@
     "lng": 4.8275,
     "michelinRating": "BIB",
     "cuisine": "Lyonnaise",
+    "description": "Bouchon emblématique du Vieux-Lyon tenu par un Meilleur Ouvrier de France où quenelles, pâté-croûte primé et tabliers de sapeur honorent la tradition lyonnaise sans compromis.",
     "heroImageKey": null
   },
   {
@@ -57,6 +61,7 @@
     "lng": 4.8357,
     "michelinRating": "BIB",
     "cuisine": "Bouchon lyonnais",
+    "description": "Bouchon historique au cœur des Terreaux, où nappes vichy, andouillette AAAAA et tablier de sapeur composent depuis des décennies un hommage sincère à la cuisine canut.",
     "heroImageKey": null
   },
   {
@@ -69,6 +74,7 @@
     "lng": 2.3745,
     "michelinRating": "ONE",
     "cuisine": "Créative",
+    "description": "Pionnier parisien de la bistronomie : le chef basco-argentin Iñaki Aizpitarte y signe un menu unique, audacieux et graphique qui a marqué la scène gastronomique du 11e.",
     "heroImageKey": null
   },
   {
@@ -81,6 +87,7 @@
     "lng": 2.337,
     "michelinRating": "ONE",
     "cuisine": "Moderne",
+    "description": "Table de Saint-Germain-des-Prés au décor industriel, où la cuisine ouverte envoie des assiettes franches et légumières inspirées du marché et des voyages de la maison.",
     "heroImageKey": null
   },
   {
@@ -93,6 +100,7 @@
     "lng": 2.2897,
     "michelinRating": "ONE",
     "cuisine": "Gastronomique",
+    "description": "Adresse culte du chef Pascal Barbot dans le 16e, où un menu-surprise ciselé mêle produits d'exception, influences asiatiques et précision botanique dans un écrin feutré.",
     "heroImageKey": null
   },
   {
@@ -105,6 +113,7 @@
     "lng": 2.3707,
     "michelinRating": "ONE",
     "cuisine": "Bistrot gourmand",
+    "description": "Écrin Art nouveau jouxtant le Cirque d'Hiver, mosaïques centenaires et comptoir en zinc en toile de fond d'une cuisine bistrotière vive et d'une carte des vins vivants remarquée.",
     "heroImageKey": null
   },
   {
@@ -117,6 +126,7 @@
     "lng": 2.3788,
     "michelinRating": "ONE",
     "cuisine": "Moderne",
+    "description": "Fer de lance du néo-bistrot parisien sous la houlette de Bertrand Grébaut, produits sourcés, menu unique au fil des saisons et engagement durable revendiqué de la cave à l'assiette.",
     "heroImageKey": null
   },
   {
@@ -129,6 +139,7 @@
     "lng": 4.827,
     "michelinRating": "ONE",
     "cuisine": "Créative",
+    "description": "Cour Renaissance à ciel ouvert sous verrière du Vieux-Lyon, cadre patrimonial d'une cuisine créative qui réinterprète les grands classiques lyonnais avec précision contemporaine.",
     "heroImageKey": null
   },
   {
@@ -141,6 +152,7 @@
     "lng": 4.8452,
     "michelinRating": "ONE",
     "cuisine": "Franco-japonaise",
+    "description": "Dialogue subtil entre technique française et esthétique japonaise : le chef Takao Takano signe un menu épuré où le végétal rencontre le poisson dans un dépouillement zen.",
     "heroImageKey": null
   },
   {
@@ -153,6 +165,7 @@
     "lng": 4.8494,
     "michelinRating": "ONE",
     "cuisine": "Classique française",
+    "description": "Maison mère de Monsieur Paul en bord de Saône, temple de la cuisine bourgeoise française où la célèbre soupe aux truffes VGE se déguste dans un décor opulent indissociable du patrimoine lyonnais.",
     "heroImageKey": null
   },
   {
@@ -165,6 +178,7 @@
     "lng": 2.3156,
     "michelinRating": "TWO",
     "cuisine": "Légumes",
+    "description": "Cathédrale du légume selon Alain Passard : récoltes quotidiennes des potagers de la maison, cuissons ciselées et desserts végétaux dans un écrin de bois blond rue de Varenne.",
     "heroImageKey": null
   },
   {
@@ -177,6 +191,7 @@
     "lng": 2.2516,
     "michelinRating": "TWO",
     "cuisine": "Gastronomique",
+    "description": "Pavillon Napoléon III au cœur du Bois de Boulogne, où Frédéric Anton orchestre une grande cuisine française d'une précision orfèvre dans un décor de verdure suspendu hors du temps.",
     "heroImageKey": null
   },
   {
@@ -189,6 +204,7 @@
     "lng": 4.8324,
     "michelinRating": "TWO",
     "cuisine": "Lyonnaise raffinée",
+    "description": "Maison historique première femme triplement étoilée, reprise par Mathieu Viannay, qui perpétue volaille de Bresse demi-deuil et quenelles Saint-Jacques avec une rigueur toute contemporaine.",
     "heroImageKey": null
   },
   {
@@ -201,6 +217,7 @@
     "lng": 4.848,
     "michelinRating": "TWO",
     "cuisine": "Créative",
+    "description": "Écrin minimaliste et graphique du chef Christophe Roure, où la précision technique d'un Meilleur Ouvrier de France se met au service d'une cuisine narrative et sculpturale.",
     "heroImageKey": null
   },
   {
@@ -213,6 +230,7 @@
     "lng": 2.301,
     "michelinRating": "THREE",
     "cuisine": "Gastronomique française",
+    "description": "Salle dorée du palace Four Seasons George V où Christian Le Squer décline une haute cuisine française d'apparat, iodée et signée, servie avec un protocole de palace sans rival.",
     "heroImageKey": null
   },
   {
@@ -225,6 +243,7 @@
     "lng": 2.3157,
     "michelinRating": "THREE",
     "cuisine": "Gastronomique française",
+    "description": "Salle lumineuse de l'Hôtel Le Bristol ouverte sur un jardin à la française, théâtre de la grande cuisine d'Éric Frechon où la poularde en vessie et les macaronis truffés sont devenus mythiques.",
     "heroImageKey": null
   },
   {
@@ -237,6 +256,7 @@
     "lng": 2.366,
     "michelinRating": "THREE",
     "cuisine": "Gastronomique française",
+    "description": "Sous les arcades de la place des Vosges, Bernard Pacaud perpétue une cuisine classique d'une pureté absolue : feuilleté de truffe fraîche et tarte fine sablée au chocolat amer en figures tutélaires.",
     "heroImageKey": null
   }
 ]

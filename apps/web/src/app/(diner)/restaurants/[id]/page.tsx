@@ -98,6 +98,21 @@ export default async function RestaurantDetailPage({ params }: PageProps) {
 
       <RestaurantReviewersRow />
 
+      {restaurant.description && (
+        <p
+          style={{
+            margin: 0,
+            paddingInline: "16px",
+            fontFamily: "var(--font-sans)",
+            fontSize: "13px",
+            lineHeight: "18px",
+            color: "var(--color-ink-muted, var(--color-ink))",
+          }}
+        >
+          {restaurant.description}
+        </p>
+      )}
+
       <RestaurantScanCta restaurantId={restaurant.id} />
     </div>
   );

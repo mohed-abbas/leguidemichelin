@@ -42,8 +42,8 @@ export function RestaurantReviewersRow({ stats }: RestaurantReviewersRowProps) {
         paddingInline: "16px",
       }}
     >
-      <div style={{ display: "flex", gap: "11px" }} aria-hidden>
-        {DEMO_REVIEWERS.map((r) => (
+      <div style={{ display: "flex" }} aria-hidden>
+        {DEMO_REVIEWERS.map((r, idx) => (
           <div
             key={r.initial}
             style={{
@@ -58,6 +58,7 @@ export function RestaurantReviewersRow({ stats }: RestaurantReviewersRowProps) {
               fontSize: "12px",
               fontWeight: "var(--font-weight-medium)",
               fontFamily: "var(--font-sans)",
+              marginLeft: idx === 0 ? 0 : "-5px",
             }}
           >
             {r.initial}

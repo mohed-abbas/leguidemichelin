@@ -44,6 +44,7 @@ function toAdminResponse(r: {
   lng: unknown;
   michelinRating: "BIB" | "ONE" | "TWO" | "THREE";
   cuisine: string | null;
+  description: string | null;
   heroImageKey: string | null;
   disabledAt: Date | null;
   createdAt: Date;
@@ -60,6 +61,7 @@ function toAdminResponse(r: {
     lng: decimalToNumber(r.lng),
     michelinRating: r.michelinRating,
     cuisine: r.cuisine,
+    description: r.description,
     heroImageKey: r.heroImageKey,
     disabledAt: r.disabledAt ? r.disabledAt.toISOString() : null,
     createdAt: r.createdAt.toISOString(),
@@ -174,11 +176,7 @@ adminRestaurantsRouter.patch("/:id", async (req: Request, res: Response, next: N
 adminRestaurantsRouter.delete("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (Object.keys(req.query).length > 0) {
-      throw new BusinessError(
-        "validation",
-        400,
-        "hard-delete is not supported; soft-disable only",
-      );
+      throw new BusinessError("validation", 400, "hard-delete is not supported; soft-disable only");
     }
     const existing = await prisma.restaurant.findUnique({ where: { id: String(req.params.id) } });
     if (!existing) throw new BusinessError("not_found", 404, "restaurant not found");

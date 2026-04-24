@@ -20,6 +20,7 @@ export const AdminRestaurantCreate = z.object({
   lng: z.number().min(-180).max(180),
   michelinRating: MichelinRating,
   cuisine: z.string().max(80).nullable().optional(),
+  description: z.string().max(800).nullable().optional(),
   heroImageKey: z.string().max(400).nullable().optional(),
 });
 export type AdminRestaurantCreateType = z.infer<typeof AdminRestaurantCreate>;
@@ -39,6 +40,7 @@ export const AdminRestaurantPatch = z
     lng: z.number().min(-180).max(180).optional(),
     michelinRating: MichelinRating.optional(),
     cuisine: z.string().max(80).nullable().optional(),
+    description: z.string().max(800).nullable().optional(),
     heroImageKey: z.string().max(400).nullable().optional(),
     disabledAt: z.union([z.string().datetime(), z.null()]).optional(),
   })

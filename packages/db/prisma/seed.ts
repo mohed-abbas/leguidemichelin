@@ -70,6 +70,7 @@ interface RestaurantFixture {
   lng: number;
   michelinRating: "BIB" | "ONE" | "TWO" | "THREE";
   cuisine: string | null;
+  description?: string | null;
   heroImageKey: string | null;
 }
 
@@ -130,6 +131,7 @@ async function main() {
         lng: r.lng,
         michelinRating: r.michelinRating,
         cuisine: r.cuisine,
+        description: r.description ?? null,
         heroImageKey: heroKey,
       },
       update: {
@@ -139,6 +141,7 @@ async function main() {
         lng: r.lng,
         michelinRating: r.michelinRating,
         cuisine: r.cuisine,
+        description: r.description ?? null,
         heroImageKey: heroKey,
       },
     });

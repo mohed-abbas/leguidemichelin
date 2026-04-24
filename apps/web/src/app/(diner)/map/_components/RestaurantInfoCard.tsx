@@ -240,30 +240,6 @@ export function RestaurantInfoCard({
             style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
           />
         ) : null}
-        {/* "Coup de cœur des gourmands" caption pill — rendered for BIB
-            restaurants per the Figma example (Pimpan was BIB in the mock). */}
-        {restaurant.michelinRating === "BIB" ? (
-          <div
-            style={{
-              position: "absolute",
-              top: 4,
-              left: 4,
-              right: 4,
-              background: "var(--color-surface)",
-              borderRadius: 3,
-              paddingBlock: 4,
-              paddingInline: 6,
-              fontFamily: "var(--font-sans)",
-              fontSize: 10,
-              lineHeight: "10px",
-              color: "var(--color-ink)",
-              fontWeight: "var(--font-weight-regular)",
-              textAlign: "center",
-            }}
-          >
-            Coup de cœur des gourmands
-          </div>
-        ) : null}
       </div>
 
       {/* ── Divider ────────────────────────────────────────────────────── */}

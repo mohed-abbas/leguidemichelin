@@ -119,6 +119,7 @@ model Restaurant {
   lng            Decimal        @db.Decimal(9, 6)
   michelinRating MichelinRating
   cuisine        String?
+  description    String? // short blurb shown on the diner restaurant detail page
   heroImageKey   String? // storage.ts opaque key
   disabledAt     DateTime? // D-06: null = visible publicly; non-null = admin-only
   createdAt      DateTime       @default(now())

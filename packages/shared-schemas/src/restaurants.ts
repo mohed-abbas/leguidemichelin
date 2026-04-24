@@ -71,6 +71,7 @@ export const RestaurantResponse = z.object({
   lng: z.number(),
   michelinRating: MichelinRating,
   cuisine: z.string().nullable(),
+  description: z.string().nullable(),
   heroImageKey: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),

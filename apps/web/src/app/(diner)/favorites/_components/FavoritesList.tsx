@@ -117,6 +117,7 @@ export function FavoritesList({ initial, loggedOut }: FavoritesListProps) {
           lng: 0,
           michelinRating: item.michelinRating,
           cuisine: item.cuisine,
+          description: null,
           heroImageKey: item.heroImageKey,
           createdAt: item.favoritedAt,
           updatedAt: item.favoritedAt,
