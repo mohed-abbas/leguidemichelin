@@ -18,6 +18,18 @@ FROM base AS builder
 # Install with NODE_ENV unset so devDeps (tsc, @types/*, tailwind, eslint) land.
 # Runtime stage re-installs with --omit=dev.
 
+# NEXT_PUBLIC_* values are inlined by Next at build time. They MUST be passed
+# as build args from compose/CI — putting them in a runtime env_file is too
+# late; the built bundle would contain `undefined`.
+ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_MAPBOX_TOKEN
+ARG NEXT_PUBLIC_BUILD_SHA
+ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL} \
+    NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
+    NEXT_PUBLIC_MAPBOX_TOKEN=${NEXT_PUBLIC_MAPBOX_TOKEN} \
+    NEXT_PUBLIC_BUILD_SHA=${NEXT_PUBLIC_BUILD_SHA}
+
 # Workspace manifests for layer-caching
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/
