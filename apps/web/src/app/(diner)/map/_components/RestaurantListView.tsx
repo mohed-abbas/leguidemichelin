@@ -33,13 +33,14 @@ export function RestaurantListView() {
       aria-label="Liste des restaurants"
       style={{
         position: "absolute",
-        left: 0,
-        right: 0,
-        top: "calc(env(safe-area-inset-top, 0px) + 92px + 37px + var(--space-md))",
-        bottom: "calc(env(safe-area-inset-bottom, 0px) + 44px + var(--space-md) + var(--space-md))",
+        inset: 0,
         overflowY: "auto",
         WebkitOverflowScrolling: "touch",
-        padding: "0 var(--space-md) var(--space-md)",
+        paddingTop: "calc(env(safe-area-inset-top, 0px) + 92px + 37px + var(--space-md))",
+        paddingBottom:
+          "calc(env(safe-area-inset-bottom, 0px) + 44px + var(--space-md) + var(--space-md))",
+        paddingLeft: "var(--space-md)",
+        paddingRight: "var(--space-md)",
         pointerEvents: "auto",
         background: "var(--color-surface-muted)",
       }}
