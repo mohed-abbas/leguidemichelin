@@ -71,7 +71,12 @@ export function RestaurantListView() {
           }}
         >
           {pins.map((r) => (
-            <li key={r.id}>
+            // `data-testid="map-pin"` is the stable Playwright hook for the
+            // /map surface pin entries (Phase 04.1 Plan 11 Sub-task 3.1).
+            // The map's actual pins are WebGL features inside the Mapbox
+            // canvas — not DOM — so the list-view row is the DOM-addressable
+            // equivalent for e2e selection. Test IDs carry no behaviour.
+            <li key={r.id} data-testid="map-pin">
               <RestaurantInfoCard restaurant={r} showScore={chasseurMode} closable={false} />
             </li>
           ))}

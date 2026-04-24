@@ -3,6 +3,7 @@ import { requireAuth, requireRole } from "../../middleware/auth.js";
 import { adminRestaurantsRouter } from "./restaurants.js";
 import { adminUsersRouter } from "./users.js";
 import { adminStatsRouter } from "./stats.js";
+import { adminRewardsRouter } from "./rewards.js";
 
 /**
  * Admin aggregator (D-05).
@@ -26,3 +27,4 @@ adminRouter.use(requireAuth, requireRole("ADMIN"));
 adminRouter.use("/restaurants", adminRestaurantsRouter);
 adminRouter.use("/users", adminUsersRouter);
 adminRouter.use("/stats", adminStatsRouter);
+adminRouter.use("/rewards", adminRewardsRouter);

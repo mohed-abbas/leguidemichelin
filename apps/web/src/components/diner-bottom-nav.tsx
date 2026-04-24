@@ -27,9 +27,9 @@ const TABS: Tab[] = [
   },
   {
     key: "favorites",
-    href: "/collection",
+    href: "/favorites",
     label: "Favoris",
-    isActive: (p) => p.startsWith("/collection") || p.startsWith("/souvenirs"),
+    isActive: (p) => p.startsWith("/favorites"),
   },
   {
     key: "profile",

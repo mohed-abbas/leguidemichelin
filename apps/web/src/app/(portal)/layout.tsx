@@ -42,12 +42,12 @@ export default async function PortalLayout({ children }: { children: ReactNode }
       >
         {showSidebar ? (
           <aside
+            aria-label="Navigation latérale"
             style={{
               background: "var(--color-surface-muted)",
               borderRight: "1px solid var(--color-border)",
               minHeight: "100%",
             }}
-            aria-label="Navigation latérale"
           >
             <PortalSidebar />
           </aside>

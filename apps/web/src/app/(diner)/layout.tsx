@@ -2,6 +2,7 @@ import { DinerNavShell } from "@/components/diner-nav-shell";
 import { FooterDisclaimer } from "@/components/footer-disclaimer";
 import { getServerSession } from "@/lib/get-server-session";
 import type { ReactNode } from "react";
+import { FavoritesHydrator } from "./_components/FavoritesHydrator";
 
 export default async function DinerLayout({ children }: { children: ReactNode }) {
   const session = await getServerSession();
@@ -37,6 +38,7 @@ export default async function DinerLayout({ children }: { children: ReactNode })
         <FooterDisclaimer align="center" />
       </main>
       {showNav ? <DinerNavShell /> : null}
+      {showNav ? <FavoritesHydrator hasSession /> : null}
     </div>
   );
 }

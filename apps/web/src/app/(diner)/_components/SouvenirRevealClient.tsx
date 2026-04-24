@@ -201,21 +201,36 @@ export function SouvenirRevealClient({ souvenir }: SouvenirRevealClientProps) {
           className="reveal-ctas"
           style={{
             display: "flex",
-            gap: "var(--space-md)",
+            flexDirection: "column",
+            gap: "var(--space-sm)",
             marginTop: "var(--space-xl)",
           }}
         >
-          <Button style={{ flex: 1 }} nativeButton={false} render={<Link href="/collection" />}>
-            Voir ma collection
-          </Button>
           <Button
-            variant="outline"
-            style={{ flex: 1 }}
+            style={{ width: "100%" }}
             nativeButton={false}
-            render={<Link href="/scan" />}
+            render={<Link href={`/review/${souvenir.restaurantId}?souvenirId=${souvenir.id}`} />}
           >
-            Scanner à nouveau
+            Donner mon avis
           </Button>
+          <div style={{ display: "flex", gap: "var(--space-md)" }}>
+            <Button
+              variant="outline"
+              style={{ flex: 1 }}
+              nativeButton={false}
+              render={<Link href="/collection" />}
+            >
+              Voir ma collection
+            </Button>
+            <Button
+              variant="outline"
+              style={{ flex: 1 }}
+              nativeButton={false}
+              render={<Link href="/scan" />}
+            >
+              Scanner à nouveau
+            </Button>
+          </div>
         </div>
       </div>
     </GsapReveal>

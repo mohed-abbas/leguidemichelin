@@ -74,6 +74,7 @@ export const RestaurantResponse = z.object({
   heroImageKey: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  isFavorited: z.boolean().optional(),
 });
 export type RestaurantResponseType = z.infer<typeof RestaurantResponse>;
 

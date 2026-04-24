@@ -73,3 +73,9 @@ body {
   top: var(--space-sm);
   box-shadow: var(--shadow-focus);
 }
+
+/* Chasseur — "Mes expériences" card "Personnaliser" link.
+ * Hidden by default. Delete this rule (or flip to `display: inline`) to reveal. */
+.chasseur-personnaliser-link {
+  display: none;
+}

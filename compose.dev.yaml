@@ -59,7 +59,7 @@ services:
       - node_modules_root:/workspace/node_modules
       - images-dev-data:/var/data/images
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/healthz >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3001/healthz >/dev/null 2>&1 || exit 1"]
       interval: 3s
       timeout: 3s
       retries: 30

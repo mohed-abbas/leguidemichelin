@@ -21,10 +21,12 @@
  */
 
 import Link from "next/link";
-import { Bookmark, Check, ClipboardList, Heart, X } from "lucide-react";
+import Image from "next/image";
+import { X } from "lucide-react";
 import { EMBLEM_SRC, emblemFromRating, mockVisits, targetFromRating } from "./PinScoreBadge";
 import type { RestaurantResponseType } from "@repo/shared-schemas";
 import { useMapStore } from "../../_stores/useMapStore";
+import { useFavoriteToggle } from "../../_hooks/useFavoriteToggle";
 
 interface Props {
   restaurant: RestaurantResponseType;
@@ -40,15 +42,49 @@ interface Props {
    * is part of a scrollable list (the list has its own back button).
    */
   closable?: boolean;
+  /**
+   * Informational / SSR-seed flag for the favorited state. The store
+   * (useFavoriteToggle -> useFavoritesStore) remains the source of truth at
+   * runtime; this prop exists so that server-rendered surfaces can pass an
+   * initial hint without forcing a store subscription pre-hydration.
+   */
+  isFavorited?: boolean;
+  /**
+   * Surface variant (D-F2):
+   *  - "map"        (default) — full map info card with close button, Notes /
+   *    Visited / Bookmark action buttons and the PinScoreBadge slot.
+   *  - "favorites"  — reused on `/favorites` (Plan 09). Only the heart button
+   *    remains; close button + Notes / Visited / Bookmark are hidden; writes
+   *    to `useMapStore` are skipped.
+   */
+  variant?: "map" | "favorites";
 }
 
-export function RestaurantInfoCard({ restaurant, showScore = false, closable = true }: Props) {
+export function RestaurantInfoCard({
+  restaurant,
+  showScore = false,
+  closable = true,
+  isFavorited,
+  variant = "map",
+}: Props) {
+  // Hooks rules: call useMapStore unconditionally. Ignore the returned setter
+  // when variant === "favorites" (favorites surface must not write map state —
+  // D-F2).
   const setSelected = useMapStore((s) => s.setSelectedRestaurant);
+  // Single subscription for favorite state via the shared hook. `hydrated`
+  // gates the flicker-free fallback for SSR surfaces that pass `isFavorited`
+  // (e.g. /restaurants/[id] — SPEC Req 7). Never add a second
+  // useFavoritesStore subscription here — funnel everything through
+  // useFavoriteToggle.
+  const { favorited, toggle, isPending, hydrated } = useFavoriteToggle(restaurant.id);
+  // Until the client store hydrates, fall back to the server-seeded
+  // `isFavorited` (if provided). Prevents the false→true flicker on the
+  // detail page when a diner refreshes a restaurant they've favorited.
+  const displayFavorited = hydrated ? favorited : (isFavorited ?? favorited);
   const emblem = emblemFromRating(restaurant.michelinRating);
   const emblemSrc = EMBLEM_SRC[emblem];
-  const multiplier = targetFromRating(restaurant.michelinRating);
   const priceBand = restaurant.michelinRating === "THREE" ? "€€€" : "€€";
-  const target = multiplier;
+  const target = targetFromRating(restaurant.michelinRating);
   const visits = showScore ? mockVisits(restaurant.id, target) : 0;
 
   return (
@@ -71,8 +107,10 @@ export function RestaurantInfoCard({ restaurant, showScore = false, closable = t
       }}
     >
       {/* Close button — the sole exit when the user wants the card gone
-          without tapping a new pin. Hidden in list-view (closable=false). */}
-      {closable ? (
+          without tapping a new pin. Hidden in list-view (closable=false) and
+          on the /favorites variant (D-F2 — favorites surface must not write
+          map state). */}
+      {closable && variant !== "favorites" ? (
         <button
           type="button"
           aria-label="Fermer"
@@ -254,56 +292,110 @@ export function RestaurantInfoCard({ restaurant, showScore = false, closable = t
           justifyContent: "space-between",
         }}
       >
-        {/* Score slot — toggles meaning with chasseur mode:
-             ▪ chasseur OFF → "Nx" + emblem (points multiplier)
-             ▪ chasseur ON  → "visits/target" + emblem (user progress) */}
+        {/* Score slot — only shown when chasseur mode is active (D-M2-a /
+            Figma node 64:571). Rendered empty otherwise — no "Nx" fallback
+            per Figma node 65:611 (chasseur OFF leaves the left slot blank). */}
+        {showScore ? (
+          <div
+            aria-label={`${visits} visites sur ${target}`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontFamily: "var(--font-sans)",
+              fontSize: 14,
+              fontWeight: "var(--font-weight-bold)",
+              color: "var(--color-ink)",
+            }}
+          >
+            <span>{`${visits}/${target}`}</span>
+            <Image
+              src="/images/chasseur/icon-star-mini-red.svg"
+              alt=""
+              width={18}
+              height={21}
+              style={{ display: "block" }}
+            />
+          </div>
+        ) : null}
+
+        {/* Action icons — chasseur-SVG set (see CollectionCard). Notes /
+            Visited / Bookmark are visual-only per SPEC Req 8. Heart is fully
+            interactive through useFavoriteToggle. On the /favorites variant
+            only the heart shows (D-F2). `marginLeft: auto` pins them right
+            regardless of whether the score slot is rendered. */}
         <div
-          aria-label={
-            showScore ? `${visits} visites sur ${target}` : `Multiplicateur ${multiplier}×`
-          }
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: 6,
-            fontFamily: "var(--font-sans)",
-            fontSize: 14,
-            fontWeight: "var(--font-weight-bold)",
-            color: "var(--color-ink)",
+            gap: 16,
+            marginLeft: "auto",
           }}
         >
-          <span>{showScore ? `${visits}/${target}` : `${multiplier}x`}</span>
-          <img src={emblemSrc} alt="" width={14} height={16} style={{ display: "block" }} />
-        </div>
-
-        {/* Action icons (visual-only for now — wiring lands with Bookmarks /
-            Favorites / Notes features). */}
-        <div style={{ display: "inline-flex", gap: 18, color: "var(--color-ink)" }}>
-          <button type="button" aria-label="Ajouter une note" style={actionBtnStyle}>
-            <ClipboardList size={18} aria-hidden />
-          </button>
-          <button type="button" aria-label="Marquer comme visité" style={actionBtnStyle}>
-            <Check size={18} aria-hidden />
-          </button>
-          <button type="button" aria-label="Ajouter aux signets" style={actionBtnStyle}>
-            <Bookmark size={18} aria-hidden />
-          </button>
-          <button type="button" aria-label="Ajouter aux favoris" style={actionBtnStyle}>
-            <Heart size={18} aria-hidden />
+          {variant !== "favorites" && (
+            <>
+              <Image
+                src="/images/chasseur/icon-card-notebook.svg"
+                alt="Notes"
+                width={17}
+                height={21}
+                style={{ display: "block", objectFit: "contain" }}
+              />
+              <Image
+                src="/images/chasseur/icon-card-check.svg"
+                alt="Visité"
+                width={21}
+                height={21}
+                style={{ display: "block", objectFit: "contain" }}
+              />
+              <Image
+                src="/images/chasseur/icon-card-bookmark.svg"
+                alt="Sauvegarder"
+                width={18}
+                height={21}
+                style={{ display: "block", objectFit: "contain" }}
+              />
+            </>
+          )}
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label={displayFavorited ? "Retirer des favoris" : "Ajouter aux favoris"}
+            aria-pressed={displayFavorited}
+            aria-busy={isPending || undefined}
+            style={{
+              display: "inline-grid",
+              placeItems: "center",
+              width: 24,
+              height: 21,
+              border: "none",
+              background: "transparent",
+              padding: 0,
+              cursor: "pointer",
+              opacity: isPending ? 0.6 : 1,
+              pointerEvents: isPending ? "none" : "auto",
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                display: "block",
+                width: 24,
+                height: 21,
+                WebkitMaskImage: "url(/images/chasseur/icon-card-heart.svg)",
+                maskImage: "url(/images/chasseur/icon-card-heart.svg)",
+                WebkitMaskRepeat: "no-repeat",
+                maskRepeat: "no-repeat",
+                WebkitMaskSize: "contain",
+                maskSize: "contain",
+                WebkitMaskPosition: "center",
+                maskPosition: "center",
+                background: displayFavorited ? "var(--color-primary)" : "var(--color-ink)",
+              }}
+            />
           </button>
         </div>
       </div>
     </div>
   );
 }
-
-const actionBtnStyle: React.CSSProperties = {
-  display: "inline-grid",
-  placeItems: "center",
-  width: 24,
-  height: 24,
-  border: "none",
-  background: "transparent",
-  color: "inherit",
-  cursor: "pointer",
-  padding: 0,
-};

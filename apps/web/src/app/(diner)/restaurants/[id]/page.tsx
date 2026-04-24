@@ -91,7 +91,10 @@ export default async function RestaurantDetailPage({ params }: PageProps) {
         )}
       </header>
 
-      <RestaurantActionCards />
+      <RestaurantActionCards
+        initialFavorited={restaurant.isFavorited ?? false}
+        restaurantId={restaurant.id}
+      />
 
       <RestaurantReviewersRow />
 

@@ -221,6 +221,33 @@ curl -si -X POST http://localhost:3001/api/redeem \
 
 ---
 
+### Diner — Favorites
+
+> All endpoints require `role: DINER` session cookie. Server always derives `userId` from the session — never from request body (PITFALL #7). Soft-disabled restaurants (`disabledAt != null`) are excluded from list responses and return 404 on toggle/delete (D-08 + Phase 04.1 D-A4).
+
+| Method | Path                              | Role  | Request | Response                 | Errors                          |
+| ------ | --------------------------------- | ----- | ------- | ------------------------ | ------------------------------- |
+| POST   | `/api/me/favorites/:restaurantId` | DINER | —       | `ToggleFavoriteResponse` | 401, 404 (restaurant not found) |
+| GET    | `/api/me/favorites`               | DINER | —       | `MeFavoritesResponse`    | 401                             |
+| DELETE | `/api/me/favorites/:restaurantId` | DINER | —       | `ToggleFavoriteResponse` | 401, 404 (restaurant not found) |
+
+Toggle is idempotent: POST twice on the same restaurant oscillates `{ favorited: true }` → `{ favorited: false }` via `$transaction` + DB `@@unique([userId, restaurantId])` (Phase 04.1 D-A4).
+
+Sample:
+
+```bash
+# Toggle
+curl -si -X POST http://localhost:3001/api/me/favorites/<restaurant-id> -b cookies.txt
+# List
+curl -s http://localhost:3001/api/me/favorites -b cookies.txt | jq
+# Delete (idempotent)
+curl -si -X DELETE http://localhost:3001/api/me/favorites/<restaurant-id> -b cookies.txt
+```
+
+**Related: `RestaurantResponse.isFavorited`** — `GET /api/restaurants/:id/menu` attaches `restaurant.isFavorited: boolean` when a valid DINER session cookie is present. Logged-out or non-DINER callers always receive `false` (never null / missing). The field is `.optional()` in the Zod schema for backward compatibility with admin/portal/scrape consumers (Phase 04.1 D-A1 refines SPEC Req 6).
+
+---
+
 ### Portal (RESTAURANT_STAFF, scoped to session.restaurantId)
 
 > All endpoints require `role: RESTAURANT_STAFF`. ADMIN calling these endpoints receives 403 (D-04 strict role enforcement). Cross-restaurant mutations are silently 404 (D-04 guard in service layer).
@@ -361,8 +388,11 @@ Import path: `import { SouvenirMintInput, SouvenirResponse, ... } from "@repo/sh
 | --------------------------------------------- | ------------------------------ | ------------------------------------------------------------- |
 | `ErrorCode`, `ErrorBody`                      | `errors.ts`                    | All error responses                                           |
 | `RestaurantListQuery`                         | `restaurants.ts`               | GET /api/restaurants query params                             |
-| `RestaurantResponse`                          | `restaurants.ts`               | GET /api/restaurants, GET /api/restaurants/:id                |
+| `RestaurantResponse`                          | `restaurants.ts`               | GET /api/restaurants, GET /api/restaurants/:id — Phase 04.1: adds optional `isFavorited: boolean` (injected on `GET /api/restaurants/:id/menu` only; logged-out → always `false`) |
 | `RestaurantMenuResponse`                      | `restaurants.ts`               | GET /api/restaurants/:id/menu                                 |
+| `FavoriteResponse`                            | `favorites.ts`                 | Item shape inside `MeFavoritesResponse`                       |
+| `ToggleFavoriteResponse`                      | `favorites.ts`                 | POST + DELETE /api/me/favorites/:restaurantId                 |
+| `MeFavoritesResponse`                         | `favorites.ts`                 | GET /api/me/favorites                                         |
 | `AdminRestaurantResponse`                     | `restaurants.ts`               | Admin restaurant responses (incl. disabledAt)                 |
 | `DishResponseShape` / `DishResponse`          | `restaurants.ts` / `portal.ts` | Dish responses                                                |
 | `SouvenirMintInput`                           | `souvenirs.ts`                 | POST /api/souvenirs (JSON part of multipart)                  |
@@ -388,3 +418,9 @@ Import path: `import { SouvenirMintInput, SouvenirResponse, ... } from "@repo/sh
 ## Changelog
 
 - 2026-04-22 — v1 frozen (Phase 3 close). Contract open for additive-only changes until Phase 5 demo hardening.
+
+### 2026-04-24 — Phase 04.1 Favorites
+
+- Added `POST /api/me/favorites/:restaurantId`, `GET /api/me/favorites`, `DELETE /api/me/favorites/:restaurantId` under Diner.
+- `GET /api/restaurants/:id/menu` now returns `restaurant.isFavorited: boolean` for DINER sessions (false otherwise).
+- New `FavoriteResponse`, `ToggleFavoriteResponse`, `MeFavoritesResponse` Zod schemas in `@repo/shared-schemas/src/favorites.ts`.

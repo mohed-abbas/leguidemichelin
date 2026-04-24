@@ -137,6 +137,38 @@ portalRouter.patch("/dishes/:id", async (req: Request, res: Response, next: Next
 });
 
 /**
+ * POST /api/portal/dishes/:id/image — replace the dish photo.
+ *
+ * Multipart only. Expects `defaultImage` field. Runs the same sharp pipeline
+ * as POST /dishes (full + thumb), then updates dish.defaultImageKey.
+ * Scope-guarded via dishService — cross-restaurant attempts → 404.
+ */
+portalRouter.post(
+  "/dishes/:id/image",
+  imageUploadSingle("defaultImage"),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const restaurantId = requireStaffRestaurant(req);
+      const uploaded = (req as Request & { file?: Express.Multer.File }).file;
+      if (!uploaded || !uploaded.buffer || uploaded.buffer.length === 0) {
+        throw new BusinessError("validation", 400, "image required");
+      }
+      const processed = await processToFullAndThumb(uploaded.buffer);
+      await storage.put(processed.fullKey, processed.fullBuffer, { contentType: "image/jpeg" });
+      await storage.put(processed.thumbKey, processed.thumbBuffer, { contentType: "image/jpeg" });
+      const updated = await dishService.setDefaultImageKey(
+        restaurantId,
+        String(req.params.id),
+        processed.fullKey,
+      );
+      res.json(toDishResponse(updated));
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+/**
  * DELETE /api/portal/dishes/:id — hard delete (scope-guarded).
  */
 portalRouter.delete("/dishes/:id", async (req: Request, res: Response, next: NextFunction) => {

@@ -14,6 +14,7 @@ import { rewardsRouter } from "./routes/rewards.js";
 import { redeemRouter } from "./routes/redeem.js";
 import { portalRouter } from "./routes/portal.js";
 import { adminRouter } from "./routes/admin/index.js";
+import { reviewsRouter } from "./routes/reviews.js";
 
 // ─── Production secret guard (CR-01) ────────────────────────────────
 // The dev fallback in auth.ts is intentional (zero-config local boot).
@@ -77,6 +78,7 @@ app.use("/api/rewards", rewardsRouter);
 app.use("/api/redeem", redeemRouter);
 app.use("/api/portal", portalRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/reviews", reviewsRouter);
 
 // Future routers (Phase 3 plans 10–11) mount below, before the 404.
 

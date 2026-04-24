@@ -11,7 +11,6 @@ export function ChasseurHeader() {
       style={{
         position: "relative",
         height: 78,
-        borderBottom: "0.5px solid var(--color-border)",
       }}
     >
       <button

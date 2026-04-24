@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Roboto } from "next/font/google";
+import { Caveat, Roboto } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -7,6 +7,13 @@ const roboto = Roboto({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
   variable: "--font-sans-runtime",
+  display: "swap",
+});
+
+const caveat = Caveat({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-handwriting",
   display: "swap",
 });
 
@@ -45,7 +52,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={roboto.variable}>
+    <html lang="fr" className={`${roboto.variable} ${caveat.variable}`}>
       <body>
         <a href="#main" className="skip-link">
           Aller au contenu

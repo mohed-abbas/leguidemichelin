@@ -216,18 +216,51 @@ async function main() {
   }
 
   const seedUsers: SeedUser[] = [
-    { email: "admin@guide-foodie.test", name: "Guide Foodie Admin", password: ADMIN_PASSWORD, role: "ADMIN" },
-    { email: "dev-murx@guide-foodie.test", name: "Murx (dev)", password: DEV_DINER_PASSWORD, role: "DINER" },
-    { email: "dev-ilia@guide-foodie.test", name: "Ilia (dev)", password: DEV_DINER_PASSWORD, role: "DINER" },
-    { email: "dev-wilson@guide-foodie.test", name: "Wilson (dev)", password: DEV_DINER_PASSWORD, role: "DINER" },
-    { email: "diner-empty@guide-foodie.test", name: "Empty Diner", password: FIXTURE_DINER_PASSWORD, role: "DINER" },
-    { email: "diner-demo@guide-foodie.test", name: "Demo Diner", password: FIXTURE_DINER_PASSWORD, role: "DINER" },
+    {
+      email: "admin@guide-foodie.test",
+      name: "Guide Foodie Admin",
+      password: ADMIN_PASSWORD,
+      role: "ADMIN",
+    },
+    {
+      email: "dev-murx@guide-foodie.test",
+      name: "Murx (dev)",
+      password: DEV_DINER_PASSWORD,
+      role: "DINER",
+    },
+    {
+      email: "dev-ilia@guide-foodie.test",
+      name: "Ilia (dev)",
+      password: DEV_DINER_PASSWORD,
+      role: "DINER",
+    },
+    {
+      email: "dev-wilson@guide-foodie.test",
+      name: "Wilson (dev)",
+      password: DEV_DINER_PASSWORD,
+      role: "DINER",
+    },
+    {
+      email: "diner-empty@guide-foodie.test",
+      name: "Empty Diner",
+      password: FIXTURE_DINER_PASSWORD,
+      role: "DINER",
+    },
+    {
+      email: "diner-demo@guide-foodie.test",
+      name: "Demo Diner",
+      password: FIXTURE_DINER_PASSWORD,
+      role: "DINER",
+    },
   ];
 
   let userCreated = 0;
   let userSkipped = 0;
   for (const u of seedUsers) {
-    const existing = await prisma.user.findUnique({ where: { email: u.email }, select: { id: true } });
+    const existing = await prisma.user.findUnique({
+      where: { email: u.email },
+      select: { id: true },
+    });
     if (existing) {
       userSkipped++;
       continue;
@@ -247,28 +280,55 @@ async function main() {
     }
     userCreated++;
   }
-  console.log(`[seed] users (admin+dev+fixture): ${userCreated} created, ${userSkipped} already existed`);
+  console.log(
+    `[seed] users (admin+dev+fixture): ${userCreated} created, ${userSkipped} already existed`,
+  );
 
   // ─── Phase 3: seed mocked Rewards ───────────────────────────────────
+  // Star unit (Option B): 1 star = 1 unique restaurant visited; rewards
+  // are gated by star threshold AND consumed on redemption.
   const REWARDS_FIXTURE = [
-    { title: "Priority booking", description: "Skip the reservation queue at a partner restaurant (demo only).", pointsCost: 500 },
-    { title: "Champagne pairing", description: "One complimentary glass pairing on your next visit (demo only).", pointsCost: 750 },
-    { title: "Chef's signature dish", description: "A signature dish from the chef's seasonal menu (demo only).", pointsCost: 1000 },
-    { title: "Tasting menu credit", description: "Credit toward a tasting menu at a partner restaurant (demo only).", pointsCost: 2000 },
+    {
+      title: "Priority booking",
+      description: "Skip the reservation queue at a partner restaurant (demo only).",
+      pointsCost: 1,
+    },
+    {
+      title: "Champagne pairing",
+      description: "One complimentary glass pairing on your next visit (demo only).",
+      pointsCost: 2,
+    },
+    {
+      title: "Chef's signature dish",
+      description: "A signature dish from the chef's seasonal menu (demo only).",
+      pointsCost: 3,
+    },
+    {
+      title: "Tasting menu credit",
+      description: "Credit toward a tasting menu at a partner restaurant (demo only).",
+      pointsCost: 5,
+    },
   ];
 
   let rewardCreated = 0;
-  let rewardSkipped = 0;
+  let rewardUpdated = 0;
   for (const r of REWARDS_FIXTURE) {
-    const existing = await prisma.reward.findFirst({ where: { title: r.title }, select: { id: true } });
+    const existing = await prisma.reward.findFirst({
+      where: { title: r.title },
+      select: { id: true },
+    });
     if (existing) {
-      rewardSkipped++;
+      await prisma.reward.update({
+        where: { id: existing.id },
+        data: { description: r.description, pointsCost: r.pointsCost, active: true },
+      });
+      rewardUpdated++;
       continue;
     }
     await prisma.reward.create({ data: { ...r, active: true } });
     rewardCreated++;
   }
-  console.log(`[seed] rewards: ${rewardCreated} created, ${rewardSkipped} already existed`);
+  console.log(`[seed] rewards: ${rewardCreated} created, ${rewardUpdated} updated to star costs`);
 
   // ─── Phase 3: seed 5 demo souvenirs for diner-demo ──────────────────
   // Mirrors the awardPoints service (apps/api/src/services/points.ts) but runs
@@ -281,7 +341,8 @@ async function main() {
   // Substituted with real slugs from tools/scrape/seed-data/restaurants.fallback.json
   // to satisfy must_haves "mix of BIB/ONE/TWO ratings" across 3 distinct restaurants.
 
-  const POINTS_BY_RATING = { BIB: 50, ONE: 100, TWO: 300, THREE: 1000 } as const;
+  // Star awarding: +1 per first souvenir at a restaurant, 0 for repeat visits.
+  // Mirrors apps/api/src/services/points.ts awardPoints().
 
   const demo = await prisma.user.findUnique({
     where: { email: "diner-demo@guide-foodie.test" },
@@ -298,8 +359,16 @@ async function main() {
     // Mix of TWO (Arpège ×2) + ONE (Septime ×2) + BIB (Le Timbre ×1) = 5 souvenirs,
     // 3 distinct restaurants, 3 distinct rating tiers. Totals: 600+200+50 = 850 pts.
     const SOUVENIR_FIXTURE: Array<{ michelinSlug: string; count: number; note: string | null }> = [
-      { michelinSlug: "paris/arpege", count: 2, note: "Alain Passage's vegetable garden on a plate — unforgettable." },
-      { michelinSlug: "paris/septime", count: 2, note: "Bertrand Grébaut's seasonal tasting — table #4 every time." },
+      {
+        michelinSlug: "paris/arpege",
+        count: 2,
+        note: "Alain Passage's vegetable garden on a plate — unforgettable.",
+      },
+      {
+        michelinSlug: "paris/septime",
+        count: 2,
+        note: "Bertrand Grébaut's seasonal tasting — table #4 every time.",
+      },
       { michelinSlug: "paris/le-timbre", count: 1, note: "Tiny room, huge Bib Gourmand flavor." },
     ];
 
@@ -307,22 +376,31 @@ async function main() {
     for (const fx of SOUVENIR_FIXTURE) {
       const r = await prisma.restaurant.findUnique({
         where: { michelinSlug: fx.michelinSlug },
-        select: { id: true, michelinRating: true, name: true, city: true, dishes: { select: { id: true }, take: 1 } },
+        select: {
+          id: true,
+          michelinRating: true,
+          name: true,
+          city: true,
+          dishes: { select: { id: true }, take: 1 },
+        },
       });
       if (!r) {
         console.error(`[seed] restaurant '${fx.michelinSlug}' missing — run scrape seed first`);
         process.exit(1);
       }
       if (r.dishes.length === 0) {
-        console.error(`[seed] restaurant '${fx.michelinSlug}' has no dishes — dish seed must run first`);
+        console.error(
+          `[seed] restaurant '${fx.michelinSlug}' has no dishes — dish seed must run first`,
+        );
         process.exit(1);
       }
       const dishId = r.dishes[0]!.id;
-      const pointsPerSouvenir = POINTS_BY_RATING[r.michelinRating];
 
       for (let i = 0; i < fx.count; i++) {
         seedIdx++;
         const imageKey = `souvenirs/seed/demo-${seedIdx}.jpg`;
+        // Always +1 per visit. Review bonus is awarded separately by
+        // createReview() (services/review.ts) when a review is submitted.
         await prisma.$transaction(async (tx) => {
           const s = await tx.souvenir.create({
             data: {
@@ -332,27 +410,54 @@ async function main() {
               note: fx.note,
               imageKey,
               usedDefaultImage: true,
-              pointsAwarded: pointsPerSouvenir,
+              pointsAwarded: 1,
             },
           });
           await tx.pointTransaction.create({
             data: {
               userId: demo.id,
-              delta: pointsPerSouvenir,
+              delta: 1,
               source: "SOUVENIR_MINT",
               souvenirId: s.id,
             },
           });
           await tx.user.update({
             where: { id: demo.id },
-            data: { totalPoints: { increment: pointsPerSouvenir } },
+            data: { totalPoints: { increment: 1 } },
           });
         });
       }
     }
-    console.log(`[seed] diner-demo: 5 souvenirs minted across 3 restaurants`);
+    console.log(`[seed] diner-demo: 5 souvenirs minted (+1 each, no review bonus seeded)`);
   } else {
     console.log(`[seed] diner-demo: ${existingSouvenirs} souvenirs already exist — skipped`);
+  }
+
+  // ─── Phase 04.1: seed one favorite for diner-demo ──────────────────────
+  // Target: first THREE-star restaurant ordered by name ASC (deterministic
+  // across scrape re-runs, per SPEC Req 12). Idempotent via composite upsert
+  // on @@unique([userId, restaurantId]) (T-04.1-40 mitigation).
+  {
+    const threeStar = await prisma.restaurant.findFirst({
+      where: { michelinRating: "THREE", disabledAt: null },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    });
+    if (!threeStar) {
+      console.error("[seed] no THREE-star restaurant found — run scrape seed first");
+      process.exit(1);
+    }
+    await prisma.favorite.upsert({
+      where: {
+        userId_restaurantId: {
+          userId: demo.id,
+          restaurantId: threeStar.id,
+        },
+      },
+      create: { userId: demo.id, restaurantId: threeStar.id },
+      update: {},
+    });
+    console.log(`[seed] diner-demo: favorited '${threeStar.name}'`);
   }
 
   await prisma.$disconnect();

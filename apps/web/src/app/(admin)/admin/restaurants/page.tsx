@@ -10,10 +10,11 @@ import type {
 } from "@repo/shared-schemas";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "../../_components/confirm-dialog";
 import { surfaceApiError } from "../../_components/error-toast";
+import { FilterBar, SearchInput } from "../../_components/filter-bar";
+import { PageHeader } from "../../_components/page-header";
 import { RATING_LABEL, RATING_ORDER } from "../../_components/rating";
 import { RestaurantDialog } from "../../_components/restaurant-dialog";
 import { RestaurantTable } from "../../_components/restaurant-table";
@@ -114,102 +115,76 @@ export default function RestaurantsPage() {
     }
   }
 
+  const totalCount = rows?.length ?? 0;
+  const filteredCount = filtered.length;
+
   return (
-    <section
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "var(--space-lg)",
-      }}
-    >
-      <header
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: "var(--space-md)",
-        }}
-      >
-        <div>
-          <h1
+    <section style={{ display: "flex", flexDirection: "column", gap: "var(--space-lg)" }}>
+      <PageHeader
+        eyebrow="Catalogue"
+        title="Restaurants"
+        description={
+          rows
+            ? `${filteredCount} restaurant${filteredCount > 1 ? "s" : ""}${
+                filteredCount !== totalCount ? ` (sur ${totalCount})` : ""
+              }`
+            : "Chargement…"
+        }
+        actions={
+          <Button type="button" onClick={openCreate}>
+            <Plus size={14} aria-hidden /> Ajouter un restaurant
+          </Button>
+        }
+      />
+
+      <FilterBar
+        search={
+          <SearchInput
+            value={filterCity}
+            onChange={setFilterCity}
+            placeholder="Filtrer par ville…"
+            ariaLabel="Filtrer par ville"
+          />
+        }
+        chips={RATING_ORDER.map((s) => {
+          const active = filterStars.has(s);
+          return (
+            <Button
+              key={s}
+              type="button"
+              size="sm"
+              variant={active ? "default" : "outline"}
+              onClick={() => toggleStar(s)}
+              aria-pressed={active}
+            >
+              {RATING_LABEL[s]}
+            </Button>
+          );
+        })}
+        trailing={
+          <label
             style={{
-              fontSize: "var(--font-size-xl)",
-              fontWeight: "var(--font-weight-semibold)",
-              margin: 0,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "var(--space-xs)",
+              color: "var(--color-ink-muted)",
+              fontSize: "var(--font-size-sm)",
+              whiteSpace: "nowrap",
+              cursor: "pointer",
             }}
           >
-            Restaurants
-          </h1>
-          <p style={{ color: "var(--color-ink-muted)", margin: "var(--space-xs) 0 0" }}>
-            {rows
-              ? `${filtered.length} restaurant${filtered.length > 1 ? "s" : ""}${
-                  filtered.length !== rows.length ? ` (sur ${rows.length})` : ""
-                }`
-              : "Chargement…"}
-          </p>
-        </div>
-        <Button type="button" onClick={openCreate}>
-          <Plus size={14} aria-hidden /> Ajouter un restaurant
-        </Button>
-      </header>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(240px, 320px) 1fr auto",
-          gap: "var(--space-md)",
-          alignItems: "center",
-          background: "var(--color-surface)",
-          border: "1px solid var(--color-border)",
-          borderRadius: "var(--radius-lg)",
-          padding: "var(--space-md)",
-        }}
-      >
-        <Input
-          placeholder="Filtrer par ville…"
-          value={filterCity}
-          onChange={(e) => setFilterCity(e.target.value)}
-          aria-label="Filtrer par ville"
-        />
-        <div style={{ display: "flex", gap: "var(--space-xs)", flexWrap: "wrap" }}>
-          {RATING_ORDER.map((s) => {
-            const active = filterStars.has(s);
-            return (
-              <Button
-                key={s}
-                type="button"
-                size="sm"
-                variant={active ? "default" : "outline"}
-                onClick={() => toggleStar(s)}
-                aria-pressed={active}
-              >
-                {RATING_LABEL[s]}
-              </Button>
-            );
-          })}
-        </div>
-        <label
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "var(--space-xs)",
-            color: "var(--color-ink-muted)",
-            fontSize: "var(--font-size-sm)",
-            whiteSpace: "nowrap",
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={includeDisabled}
-            onChange={(e) => setIncludeDisabled(e.target.checked)}
-          />
-          Inclure les désactivés
-        </label>
-      </div>
+            <input
+              type="checkbox"
+              checked={includeDisabled}
+              onChange={(e) => setIncludeDisabled(e.target.checked)}
+            />
+            Inclure les désactivés
+          </label>
+        }
+      />
 
       {rows === null ? (
-        <Skeleton style={{ height: "320px" }} />
+        <Skeleton style={{ height: 360, borderRadius: "var(--radius-lg)" }} />
       ) : (
         <RestaurantTable
           rows={filtered}

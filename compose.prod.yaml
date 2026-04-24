@@ -1,8 +1,29 @@
-name: guide-foodie-journey-prod
+name: foodie
+
+# ─────────────────────────────────────────────────────────────────────
+# Production compose for guide-foodie-journey.
+#
+# Relies on the shared infra stack at /home/murx/shared/ for nginx + certbot.
+# This stack brings its OWN postgres (project-isolated data volume).
+#
+# web + api join the external `proxy-net` so the shared nginx container can
+# reach them by container name (foodie-web:3000, foodie-api:3001). NO host
+# ports are published — only nginx (in the shared stack) is exposed to the
+# internet.
+#
+# First-time bootstrap (on the VPS):
+#   docker network inspect proxy-net >/dev/null 2>&1 || docker network create proxy-net
+#   cp .env.example .env   # then fill real values
+#   bash scripts/deploy.sh
+#
+# Redeploy after a push:
+#   bash scripts/deploy.sh
+# ─────────────────────────────────────────────────────────────────────
 
 services:
   postgres:
     image: postgres:16-alpine
+    container_name: foodie-postgres
     restart: unless-stopped
     env_file: .env
     environment:
@@ -13,15 +34,23 @@ services:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
-      interval: 3s
+      interval: 5s
       timeout: 3s
       retries: 20
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          memory: 512M
 
   migrate:
     build:
       context: .
       dockerfile: Dockerfile.api
       target: runtime
+    container_name: foodie-migrate
     env_file: .env
     command: sh -c "cd /app/packages/db && npx prisma migrate deploy"
     depends_on:
@@ -34,48 +63,95 @@ services:
       context: .
       dockerfile: Dockerfile.api
       target: runtime
+    image: foodie-api:latest
+    container_name: foodie-api
     env_file: .env
     restart: unless-stopped
     volumes:
-      - /srv/foodie/images:/var/data/images # host bind per D-10 (Phase 6 confirms exact path)
+      - /srv/foodie/images:/var/data/images
+    healthcheck:
+      # 127.0.0.1 avoids Alpine's localhost->::1 (IPv6) resolution, which
+      # fails when the app binds 0.0.0.0.
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3001/healthz >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
     depends_on:
       migrate:
         condition: service_completed_successfully
+    networks:
+      - default
+      - proxy-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          memory: 256M
+
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      target: runtime
+    container_name: foodie-seed
+    env_file: .env
+    environment:
+      SEED_API_BASE: "http://api:3001"
+    command: sh -c "cd /app/packages/db && npx tsx prisma/seed.ts"
+    depends_on:
+      api:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
 
   web:
     build:
       context: .
       dockerfile: Dockerfile.web
       target: runtime
+      # NEXT_PUBLIC_* vars are INLINED at build time. They must be passed
+      # here, not via env_file — runtime env vars won't make it into the
+      # already-compiled JS bundles.
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_MAPBOX_TOKEN: ${NEXT_PUBLIC_MAPBOX_TOKEN}
+        NEXT_PUBLIC_BUILD_SHA: ${NEXT_PUBLIC_BUILD_SHA:-unknown}
+    image: foodie-web:latest
+    container_name: foodie-web
     env_file: .env
+    # API_INTERNAL_URL is how Next's /api/* rewrite reaches Express inside
+    # the compose network. Overrides the dev default in .env.
+    environment:
+      API_INTERNAL_URL: "http://api:3001"
     restart: unless-stopped
     depends_on:
       api:
-        condition: service_started
-
-  # ─────────────────────────────────────────────────────────────────
-  # TODO Phase 6 (per CONTEXT D-15): reverse proxy + TLS via Let's Encrypt
-  # Caddy is the simplest default (automatic HTTPS + Let's Encrypt renewal).
-  # Uncomment and configure in Phase 6 once a VPS provider is chosen.
-  # ─────────────────────────────────────────────────────────────────
-  #
-  # reverse-proxy:
-  #   image: caddy:2
-  #   restart: unless-stopped
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   volumes:
-  #     - ./Caddyfile:/etc/caddy/Caddyfile:ro
-  #     - caddy-data:/data
-  #     - caddy-config:/config
-  #   depends_on:
-  #     web:
-  #       condition: service_started
-  #     api:
-  #       condition: service_started
+        condition: service_healthy
+    networks:
+      - default
+      - proxy-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          memory: 256M
 
 volumes:
   postgres-data:
-  # caddy-data:
-  # caddy-config:
+
+networks:
+  # Default bridge network for intra-project traffic (web <-> api <-> postgres).
+  default:
+    driver: bridge
+  # Shared proxy network created once on the VPS. The shared nginx container
+  # is also attached to this network and routes foodie.thecodeman.cloud to
+  # foodie-web:3000 and /api/* to foodie-api:3001.
+  proxy-net:
+    external: true

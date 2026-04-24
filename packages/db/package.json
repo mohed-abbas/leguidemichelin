@@ -16,6 +16,7 @@
     "migrate": "prisma migrate deploy",
     "migrate:dev": "prisma migrate dev",
     "seed": "tsx prisma/seed.ts",
+    "migrate-to-stars": "tsx prisma/migrate-to-stars.ts",
     "studio": "prisma studio",
     "build": "tsc",
     "postinstall": "prisma generate"

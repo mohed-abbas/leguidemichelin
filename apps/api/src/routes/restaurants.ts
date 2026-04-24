@@ -2,6 +2,8 @@ import { Router, type Request, type Response, type NextFunction } from "express"
 import { prisma, type Prisma } from "@repo/db";
 import { RestaurantListQuery } from "@repo/shared-schemas";
 import { ValidationError, BusinessError } from "../errors.js";
+import { optionalAuth, type AuthedRequest } from "../middleware/auth.js";
+import { isFavoritedBy } from "../services/favorites.js";
 
 /**
  * Public restaurants router. ALL reads filter disabledAt: null (D-08).
@@ -114,31 +116,56 @@ restaurantsRouter.get("/:id", async (req: Request, res: Response, next: NextFunc
 /**
  * GET /api/restaurants/:id/menu — restaurant + dishes ordered by sortOrder.
  * 404 if the restaurant is missing or disabled.
+ *
+ * Phase 04.1: optionalAuth attaches req.user when a valid DINER session is present,
+ * enabling opportunistic isFavorited injection. Logged-out, non-DINER, or any
+ * lookup failure → isFavorited: false (never null, never missing, never 500).
+ * Scoped per-handler (not router-wide) — other public reads stay uncostly.
  */
-restaurantsRouter.get("/:id/menu", async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const id = String(req.params.id);
-    const r = await prisma.restaurant.findFirst({
-      where: { id, disabledAt: null },
-      include: { dishes: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] } },
-    });
-    if (!r) throw new BusinessError("not_found", 404, "restaurant not found");
-    const { dishes, ...restaurant } = r;
-    res.json({
-      restaurant: toResponse(restaurant),
-      dishes: dishes.map((d) => ({
-        id: d.id,
-        restaurantId: d.restaurantId,
-        name: d.name,
-        description: d.description,
-        priceCents: d.priceCents,
-        defaultImageKey: d.defaultImageKey,
-        sortOrder: d.sortOrder,
-        createdAt: d.createdAt.toISOString(),
-        updatedAt: d.updatedAt.toISOString(),
-      })),
-    });
-  } catch (err) {
-    next(err);
-  }
-});
+restaurantsRouter.get(
+  "/:id/menu",
+  optionalAuth,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = String(req.params.id);
+      const r = await prisma.restaurant.findFirst({
+        where: { id, disabledAt: null },
+        include: { dishes: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] } },
+      });
+      if (!r) throw new BusinessError("not_found", 404, "restaurant not found");
+
+      // Phase 04.1: opportunistically inject isFavorited for authenticated DINERs.
+      // Logged-out, non-DINER roles, or any lookup failure → false (never null/missing).
+      const authed = (req as Partial<AuthedRequest>).user;
+      let isFavorited = false;
+      if (authed && authed.role === "DINER") {
+        try {
+          isFavorited = await isFavoritedBy({
+            userId: authed.id,
+            restaurantId: id,
+          });
+        } catch {
+          isFavorited = false;
+        }
+      }
+
+      const { dishes, ...restaurant } = r;
+      res.json({
+        restaurant: { ...toResponse(restaurant), isFavorited },
+        dishes: dishes.map((d) => ({
+          id: d.id,
+          restaurantId: d.restaurantId,
+          name: d.name,
+          description: d.description,
+          priceCents: d.priceCents,
+          defaultImageKey: d.defaultImageKey,
+          sortOrder: d.sortOrder,
+          createdAt: d.createdAt.toISOString(),
+          updatedAt: d.updatedAt.toISOString(),
+        })),
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);

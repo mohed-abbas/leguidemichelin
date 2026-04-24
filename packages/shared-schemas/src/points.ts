@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const PointSource = z.enum(["SOUVENIR_MINT", "REDEMPTION"]);
+export const PointSource = z.enum(["SOUVENIR_MINT", "REDEMPTION", "REVIEW_BONUS"]);
 export type PointSourceType = z.infer<typeof PointSource>;
 
 /** Single point ledger entry. */
@@ -11,7 +11,8 @@ export const PointTransactionResponse = z.object({
   source: PointSource,
   souvenirId: z.string().nullable(),
   redemptionId: z.string().nullable(),
-  label: z.string(), // "Souvenir @ <restaurant>" or "Redeemed <reward>"
+  reviewId: z.string().nullable(),
+  label: z.string(), // "Souvenir @ <restaurant>" or "Redeemed <reward>" or "Avis @ <restaurant>"
   createdAt: z.string(),
 });
 export type PointTransactionResponseType = z.infer<typeof PointTransactionResponse>;

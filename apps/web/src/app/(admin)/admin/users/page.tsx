@@ -8,9 +8,10 @@ import type {
 } from "@repo/shared-schemas";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { surfaceApiError } from "../../_components/error-toast";
+import { FilterBar, SearchInput } from "../../_components/filter-bar";
+import { PageHeader } from "../../_components/page-header";
 import { ROLE_LABEL, UserTable } from "../../_components/user-table";
 import { UserRoleDialog } from "../../_components/user-role-dialog";
 
@@ -67,75 +68,63 @@ export default function UsersPage() {
   }
 
   function applyUser(updated: AdminUserResponseType) {
-    setUsers((prev) => (prev ? prev.map((u) => (u.id === updated.id ? updated : u)) : [updated]));
+    setUsers((prev) =>
+      prev
+        ? prev.map((u) =>
+            u.id === updated.id
+              ? // Preserve souvenirCount — backend PATCH returns 0 (L-05).
+                { ...updated, souvenirCount: u.souvenirCount }
+              : u,
+          )
+        : [updated],
+    );
   }
 
-  return (
-    <section
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "var(--space-lg)",
-      }}
-    >
-      <header>
-        <h1
-          style={{
-            fontSize: "var(--font-size-xl)",
-            fontWeight: "var(--font-weight-semibold)",
-            margin: 0,
-          }}
-        >
-          Utilisateurs
-        </h1>
-        <p style={{ color: "var(--color-ink-muted)", margin: "var(--space-xs) 0 0" }}>
-          {users
-            ? `${filtered.length} utilisateur${filtered.length > 1 ? "s" : ""}${
-                filtered.length !== users.length ? ` (sur ${users.length})` : ""
-              }`
-            : "Chargement…"}
-        </p>
-      </header>
+  const totalCount = users?.length ?? 0;
+  const filteredCount = filtered.length;
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(240px, 320px) 1fr",
-          gap: "var(--space-md)",
-          alignItems: "center",
-          background: "var(--color-surface)",
-          border: "1px solid var(--color-border)",
-          borderRadius: "var(--radius-lg)",
-          padding: "var(--space-md)",
-        }}
-      >
-        <Input
-          placeholder="Rechercher (nom ou email)…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          aria-label="Rechercher un utilisateur"
-        />
-        <div style={{ display: "flex", gap: "var(--space-xs)", flexWrap: "wrap" }}>
-          {ROLES.map((r) => {
-            const active = roleFilter.has(r);
-            return (
-              <Button
-                key={r}
-                type="button"
-                size="sm"
-                variant={active ? "default" : "outline"}
-                onClick={() => toggleRole(r)}
-                aria-pressed={active}
-              >
-                {ROLE_LABEL[r]}
-              </Button>
-            );
-          })}
-        </div>
-      </div>
+  return (
+    <section style={{ display: "flex", flexDirection: "column", gap: "var(--space-lg)" }}>
+      <PageHeader
+        eyebrow="Communauté"
+        title="Utilisateurs"
+        description={
+          users
+            ? `${filteredCount} utilisateur${filteredCount > 1 ? "s" : ""}${
+                filteredCount !== totalCount ? ` (sur ${totalCount})` : ""
+              }`
+            : "Chargement…"
+        }
+      />
+
+      <FilterBar
+        search={
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Rechercher par nom ou email…"
+            ariaLabel="Rechercher un utilisateur"
+          />
+        }
+        chips={ROLES.map((r) => {
+          const active = roleFilter.has(r);
+          return (
+            <Button
+              key={r}
+              type="button"
+              size="sm"
+              variant={active ? "default" : "outline"}
+              onClick={() => toggleRole(r)}
+              aria-pressed={active}
+            >
+              {ROLE_LABEL[r]}
+            </Button>
+          );
+        })}
+      />
 
       {users === null ? (
-        <Skeleton style={{ height: "320px" }} />
+        <Skeleton style={{ height: 360, borderRadius: "var(--radius-lg)" }} />
       ) : (
         <UserTable rows={filtered} meId={meId} onEdit={setEditing} />
       )}

@@ -1,13 +1,20 @@
 import { headers } from "next/headers";
 import type {
+  MePointsResponseType,
   MeSouvenirsResponseType,
   RestaurantMenuResponseType,
+  RewardResponseType,
   SouvenirResponseType,
 } from "@repo/shared-schemas";
 
 import { ChasseurHeader } from "./_components/ChasseurHeader";
 import { ChasseurTabs } from "./_components/ChasseurTabs";
-import { priceTierFromRating, type CollectionItem } from "./_data";
+import {
+  buildBestExperienceChips,
+  buildExperienceCards,
+  priceTierFromRating,
+  type CollectionItem,
+} from "./_data";
 
 const API_INTERNAL = process.env.API_INTERNAL_URL ?? "http://localhost:3001";
 
@@ -62,20 +69,42 @@ export default async function ChasseurPage() {
   const h = await headers();
   const cookie = h.get("cookie") ?? "";
 
-  const souvenirsRes = await fetch(`${API_INTERNAL}/api/me/souvenirs`, {
-    headers: { cookie },
-    cache: "no-store",
-  });
+  const [souvenirsRes, rewardsRes, pointsRes] = await Promise.all([
+    fetch(`${API_INTERNAL}/api/me/souvenirs`, { headers: { cookie }, cache: "no-store" }),
+    fetch(`${API_INTERNAL}/api/rewards`, { headers: { cookie }, cache: "no-store" }),
+    fetch(`${API_INTERNAL}/api/me/points`, { headers: { cookie }, cache: "no-store" }),
+  ]);
+
   const data: MeSouvenirsResponseType = souvenirsRes.ok
     ? ((await souvenirsRes.json()) as MeSouvenirsResponseType)
     : { items: [], visitedRestaurantIds: [] };
+
+  const rewardsList: RewardResponseType[] = rewardsRes.ok
+    ? ((await rewardsRes.json()) as { items: RewardResponseType[] }).items
+    : [];
+
+  const pointsBalance: number = pointsRes.ok
+    ? ((await pointsRes.json()) as MePointsResponseType).balance
+    : 0;
 
   const uniqueRestaurantIds = Array.from(new Set(data.items.map((s) => s.restaurantId)));
   const menuResults = await Promise.all(uniqueRestaurantIds.map((id) => fetchMenu(id, cookie)));
   const menus = new Map(uniqueRestaurantIds.map((id, i) => [id, menuResults[i] ?? null]));
 
   const items = buildCollectionItems(data.items, menus);
-  const starCount = data.items.length;
+  // Single source of truth: User.totalPoints from /api/me/points (set below).
+  // Top hero and "Mes récompenses → Solde" must agree.
+
+  const totalDishesByRestaurant = new Map<string, number>();
+  for (const [id, menu] of menus.entries()) {
+    if (menu) totalDishesByRestaurant.set(id, menu.dishes.length);
+  }
+  const bestExperiences = buildBestExperienceChips(data.items);
+  const experiences = buildExperienceCards(data.items, totalDishesByRestaurant);
+
+  // Surface the cheapest 2 rewards within reach (or unaffordable but visible)
+  // — the catalog page (/rewards) shows the full set + redeem flow.
+  const featuredRewards = [...rewardsList].sort((a, b) => a.pointsCost - b.pointsCost).slice(0, 2);
 
   return (
     <div
@@ -85,7 +114,14 @@ export default async function ChasseurPage() {
       }}
     >
       <ChasseurHeader />
-      <ChasseurTabs items={items} starCount={starCount} />
+      <ChasseurTabs
+        items={items}
+        starCount={pointsBalance}
+        bestExperiences={bestExperiences}
+        experiences={experiences}
+        featuredRewards={featuredRewards}
+        pointsBalance={pointsBalance}
+      />
     </div>
   );
 }
