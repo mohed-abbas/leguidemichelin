@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { useFavoritesStore } from "../../_stores/useFavoritesStore";
 
 type Row =
   | { kind: "link"; label: string; href: string }
@@ -67,6 +68,11 @@ export function AccountList() {
 
   async function handleSignOut() {
     if (signingOut) return;
+    // Phase 04.1 (T-04.1-38): sanitize client state before handing off to
+    // the auth call so favorites from session A can never visually leak into
+    // session B on the same browser. reset() is a synchronous set(); must
+    // fire before any awaitable so aborts still leave the store cleared.
+    useFavoritesStore.getState().reset();
     setSigningOut(true);
     try {
       await authClient.signOut();

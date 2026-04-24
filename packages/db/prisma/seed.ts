@@ -433,6 +433,33 @@ async function main() {
     console.log(`[seed] diner-demo: ${existingSouvenirs} souvenirs already exist — skipped`);
   }
 
+  // ─── Phase 04.1: seed one favorite for diner-demo ──────────────────────
+  // Target: first THREE-star restaurant ordered by name ASC (deterministic
+  // across scrape re-runs, per SPEC Req 12). Idempotent via composite upsert
+  // on @@unique([userId, restaurantId]) (T-04.1-40 mitigation).
+  {
+    const threeStar = await prisma.restaurant.findFirst({
+      where: { michelinRating: "THREE", disabledAt: null },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    });
+    if (!threeStar) {
+      console.error("[seed] no THREE-star restaurant found — run scrape seed first");
+      process.exit(1);
+    }
+    await prisma.favorite.upsert({
+      where: {
+        userId_restaurantId: {
+          userId: demo.id,
+          restaurantId: threeStar.id,
+        },
+      },
+      create: { userId: demo.id, restaurantId: threeStar.id },
+      update: {},
+    });
+    console.log(`[seed] diner-demo: favorited '${threeStar.name}'`);
+  }
+
   await prisma.$disconnect();
 }
 
