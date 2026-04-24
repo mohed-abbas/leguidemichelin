@@ -44,39 +44,39 @@ export function RestaurantListView() {
         background: "var(--color-surface-muted)",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "var(--space-md)",
-          width: "100%",
-          maxWidth: 768,
-          marginInline: "auto",
-          paddingTop: "var(--space-md)",
-        }}
-      >
-        {pins.length === 0 ? (
-          <p
-            style={{
-              marginTop: "var(--space-xl)",
-              textAlign: "center",
-              color: "var(--color-ink-muted)",
-              fontSize: "var(--font-size-sm)",
-            }}
-          >
-            Aucun restaurant dans cette zone. Déplacez la carte pour explorer.
-          </p>
-        ) : (
-          pins.map((r) => (
-            <RestaurantInfoCard
-              key={r.id}
-              restaurant={r}
-              showScore={chasseurMode}
-              closable={false}
-            />
-          ))
-        )}
-      </div>
+      {pins.length === 0 ? (
+        <p
+          style={{
+            marginTop: "var(--space-xl)",
+            textAlign: "center",
+            color: "var(--color-ink-muted)",
+            fontSize: "var(--font-size-sm)",
+          }}
+        >
+          Aucun restaurant dans cette zone. Déplacez la carte pour explorer.
+        </p>
+      ) : (
+        <ul
+          aria-label={`${pins.length} restaurant${pins.length > 1 ? "s" : ""}`}
+          style={{
+            listStyle: "none",
+            margin: 0,
+            padding: "var(--space-md) 0 0",
+            display: "flex",
+            flexDirection: "column",
+            gap: "var(--space-md)",
+            width: "100%",
+            maxWidth: 768,
+            marginInline: "auto",
+          }}
+        >
+          {pins.map((r) => (
+            <li key={r.id}>
+              <RestaurantInfoCard restaurant={r} showScore={chasseurMode} closable={false} />
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

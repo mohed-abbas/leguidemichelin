@@ -6,10 +6,14 @@
  * Responsibilities:
  *  - Geolocation on mount (3s timeout, silent Paris fallback) — D-18
  *  - Clustered GeoJSON source (cluster:true, clusterMaxZoom:14, clusterRadius:50) — D-19
- *  - Visited vs un-visited symbol layer via pin-visited / pin-unvisited images — D-19/D-21
+ *  - Symbol layer with per-restaurant pin variants (bib / starred /
+ *    recommended) keyed on `michelinRating` via the `variant` feature prop — D-19
  *  - MoveEnd fetches GET /api/restaurants?bbox=... debounced 300ms — D-20
  *  - Bbox results cached in useMapStore via quantizeBbox keys — D-20
- *  - visitedSet hydrates once on mount when visitedDirty — D-21
+ *  - visitedSet hydrates once on mount when visitedDirty — D-21 (RESERVED:
+ *    visited-vs-unvisited overlay is tracked for re-enablement; slice is
+ *    kept hot in the store so a visited badge layer can be stacked without
+ *    re-plumbing the fetch. See review PR-6 H-1.)
  *  - Pin click writes selectedRestaurant → MapOverlay renders the
  *    bottom RestaurantInfoCard; cluster click eases in — D-22
  *  - Missing NEXT_PUBLIC_MAPBOX_TOKEN → dev fallback card (no silent grey tiles)

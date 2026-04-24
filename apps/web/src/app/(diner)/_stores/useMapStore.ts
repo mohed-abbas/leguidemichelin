@@ -6,7 +6,11 @@
  * Holds:
  *  - `visitedSet<restaurantId>` — hydrated from GET /api/me/souvenirs on `/map`
  *    (and `<MapPreview />`) mount, flipped dirty after a successful mint (04-03).
- *    Pin styling branches on `visitedSet.has(id)` (D-21).
+ *    RESERVED for the visited-vs-unvisited pin badge layer (D-21) — MapCanvas
+ *    currently renders type-only pins (bib/starred/recommended); the visited
+ *    overlay is tracked for re-enablement (see review PR-6 H-1). Keeping the
+ *    slice hot in the store means the badge layer can be stacked without
+ *    re-plumbing the hydrate + dirty-flag dance.
  *  - `visitedDirty` flag — consumers dedupe `refreshVisited()` by checking this
  *    before calling. Flipped true by `markVisitedDirty()` (post-mint) and reset
  *    to false after a successful refetch.

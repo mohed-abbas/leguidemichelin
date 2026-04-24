@@ -127,10 +127,3 @@ export const EMBLEM_SRC: Record<EmblemKey, string> = {
   bib: "/icons/map/bib-emblem.svg",
   face: "/icons/map/face-emblem.svg",
 };
-
-/** Map emblem keys to their full pin SVG paths (dark teardrop + glyph). */
-export const PIN_SRC: Record<EmblemKey, string> = {
-  flower: "/pins/pin-starred.svg",
-  bib: "/pins/pin-bib.svg",
-  face: "/pins/pin-recommended.svg",
-};

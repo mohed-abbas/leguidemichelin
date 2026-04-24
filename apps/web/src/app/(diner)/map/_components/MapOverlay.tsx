@@ -96,10 +96,10 @@ export function MapOverlay() {
         <span aria-hidden />
       </header>
 
-      {/* ── Filter chips ────────────────────────────────────────────────── */}
+      {/* ── Filter chips (visual-only; filters not yet wired — no aria-pressed
+            or role="toolbar" until onClick handlers exist) ──────────────── */}
       <div
-        role="toolbar"
-        aria-label="Filtres"
+        aria-hidden
         style={{
           position: "absolute",
           top: "calc(env(safe-area-inset-top, 0px) + 86px)",
@@ -124,10 +124,8 @@ export function MapOverlay() {
             const isActive = f.key === activeKey;
             const isMuted = f.key === "nouveau";
             return (
-              <button
+              <span
                 key={f.key}
-                type="button"
-                aria-pressed={isActive}
                 style={{
                   height: 37,
                   padding: "0 16px",
@@ -136,13 +134,12 @@ export function MapOverlay() {
                   gap: 6,
                   borderRadius: "var(--radius-md)",
                   background: isMuted ? "var(--color-chip-muted-bg)" : "var(--color-surface)",
-                  border: isActive ? "1px solid #000" : "1px solid transparent",
+                  border: isActive ? "1px solid var(--color-ink)" : "1px solid transparent",
                   color: isMuted ? "var(--color-chip-muted-fg)" : "var(--color-ink)",
                   fontFamily: "var(--font-sans)",
                   fontWeight: "var(--font-weight-bold)",
                   fontSize: "var(--font-size-sm)",
                   lineHeight: 1,
-                  cursor: "pointer",
                   flex: "0 0 auto",
                 }}
               >
@@ -161,11 +158,11 @@ export function MapOverlay() {
                     alt=""
                     width={16}
                     height={16}
-                    style={{ display: "block", color: "var(--color-ink)" }}
+                    style={{ display: "block" }}
                   />
                 ) : null}
                 <span>{f.label}</span>
-              </button>
+              </span>
             );
           })}
         </div>

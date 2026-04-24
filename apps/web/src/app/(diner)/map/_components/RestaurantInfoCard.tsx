@@ -49,11 +49,11 @@ export function RestaurantInfoCard({ restaurant, showScore = false, closable = t
   const multiplier = targetFromRating(restaurant.michelinRating);
   const priceBand = restaurant.michelinRating === "THREE" ? "€€€" : "€€";
   const target = multiplier;
-  const visits = mockVisits(restaurant.id, target);
+  const visits = showScore ? mockVisits(restaurant.id, target) : 0;
 
   return (
     <div
-      role="dialog"
+      role="group"
       aria-label={`Informations sur ${restaurant.name}`}
       style={{
         position: "relative",
