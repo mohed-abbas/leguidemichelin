@@ -63,6 +63,51 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 }
 
 /**
+ * optionalAuth — attaches req.user when a valid session cookie is present.
+ * Never throws 401, never exposes auth errors. Used on public GET endpoints
+ * that want to opportunistically enrich the response (e.g. isFavorited on /menu).
+ * See Phase 04.1 D-A2.
+ */
+export async function optionalAuth(
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const session = await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    });
+    if (!session?.user) {
+      next();
+      return;
+    }
+    const disabledRow = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { disabledAt: true },
+    });
+    if (disabledRow?.disabledAt) {
+      next();
+      return;
+    }
+    (req as AuthedRequest).user = {
+      id: session.user.id,
+      email: session.user.email,
+      name: session.user.name,
+      role: (session.user as { role?: string }).role as
+        | "DINER"
+        | "RESTAURANT_STAFF"
+        | "ADMIN",
+      restaurantId:
+        (session.user as { restaurantId?: string | null }).restaurantId ?? null,
+    };
+    next();
+  } catch {
+    // Silent fail — malformed session must never 500 a public read.
+    next();
+  }
+}
+
+/**
  * requireRole — runs AFTER requireAuth. Returns 403 on role mismatch.
  * ADMIN does NOT bypass (Phase 2 D-12 strict equality). Each endpoint
  * binds explicitly to its required role.
