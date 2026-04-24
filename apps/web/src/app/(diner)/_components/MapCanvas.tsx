@@ -82,6 +82,9 @@ export function MapCanvas() {
     lat: 48.8566,
     zoom: 10,
   });
+  // Current user location — used to render the blue user-position marker.
+  // Defaults to Paris until geolocation resolves (matches center fallback).
+  const [userPos, setUserPos] = useState<{ lng: number; lat: number } | null>(null);
   // Cluster circle color read from CSS token once on mount — Mapbox paint
   // objects are plain JS data; they do not resolve CSS custom properties.
   // Initialize to empty string; the useEffect resolves the token before any
@@ -127,6 +130,7 @@ export function MapCanvas() {
       (pos) => {
         const { longitude, latitude } = pos.coords;
         setCenter({ lng: longitude, lat: latitude, zoom: 10 });
+        setUserPos({ lng: longitude, lat: latitude });
         // Re-center map if already loaded.
         mapRef.current?.easeTo({ center: [longitude, latitude], zoom: 10, duration: 800 });
       },
@@ -360,10 +364,34 @@ export function MapCanvas() {
           })
         : null}
 
+      {userPos ? (
+        <Marker longitude={userPos.lng} latitude={userPos.lat} anchor="center">
+          <span
+            aria-label="Votre position"
+            style={{
+              display: "block",
+              width: "22px",
+              height: "22px",
+              transform: "translate(-50%, -50%)",
+              pointerEvents: "none",
+            }}
+          >
+            <img
+              src="/images/accueil/map/user-dot.svg"
+              alt=""
+              width={22}
+              height={22}
+              style={{ display: "block", width: "100%", height: "100%" }}
+            />
+          </span>
+        </Marker>
+      ) : null}
+
       <RecenterButton
-        onRecenter={(lng, lat) =>
-          mapRef.current?.easeTo({ center: [lng, lat], zoom: 13, duration: 800 })
-        }
+        onRecenter={(lng, lat) => {
+          setUserPos({ lng, lat });
+          mapRef.current?.easeTo({ center: [lng, lat], zoom: 13, duration: 800 });
+        }}
       />
     </Map>
   );
