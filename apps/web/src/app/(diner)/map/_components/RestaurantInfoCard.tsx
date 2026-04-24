@@ -340,15 +340,9 @@ export function RestaurantInfoCard({
             aria-busy={isPending || undefined}
             style={{
               ...actionBtnStyle,
-              // 24px icon + 10px padding each side = 44px touch target
-              // (UI-SPEC §2).
-              padding: 10,
               color: displayFavorited ? "var(--color-primary)" : "inherit",
               opacity: isPending ? 0.6 : 1,
               pointerEvents: isPending ? "none" : "auto",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
             }}
           >
             <Heart size={18} aria-hidden fill={displayFavorited ? "currentColor" : "none"} />
