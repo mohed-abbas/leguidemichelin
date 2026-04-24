@@ -14,6 +14,9 @@ import { DinerBottomNav } from "./diner-bottom-nav";
 export function DinerNavShell() {
   const pathname = usePathname();
   if (pathname === "/map") return null;
+  // Review pages render their own pinned CTAs at the bottom; hide the nav
+  // chrome so the questionnaire and thank-you screens match the Figma layout.
+  if (pathname?.startsWith("/review")) return null;
   return (
     <nav
       aria-label="Primary"
