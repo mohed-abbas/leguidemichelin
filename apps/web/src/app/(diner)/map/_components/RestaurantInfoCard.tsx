@@ -311,7 +311,13 @@ export function RestaurantInfoCard({
           }}
         >
           <span>{showScore ? `${visits}/${target}` : `${multiplier}x`}</span>
-          <img src={emblemSrc} alt="" width={14} height={16} style={{ display: "block" }} />
+          <Image
+            src="/images/chasseur/icon-star-mini-red.svg"
+            alt=""
+            width={18}
+            height={21}
+            style={{ display: "block" }}
+          />
         </div>
 
         {/* Action icons — chasseur-SVG set (see CollectionCard). Notes /
