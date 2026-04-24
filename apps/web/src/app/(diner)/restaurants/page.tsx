@@ -26,16 +26,42 @@ export default async function RestaurantsPage({ searchParams }: PageProps) {
   }
 
   return (
-    <section style={{ display: "flex", flexDirection: "column", gap: "var(--space-lg)" }}>
-      <h1
-        style={{
-          fontSize: "var(--font-size-xl)",
-          fontWeight: "var(--font-weight-semibold)",
-          margin: 0,
-        }}
-      >
-        Restaurants
-      </h1>
+    <section
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "var(--space-lg)",
+        paddingInline: "var(--space-md)",
+        paddingBlock: "var(--space-md)",
+      }}
+    >
+      <header style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+        <h1
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: "var(--font-size-h1)",
+            fontWeight: "var(--font-weight-regular)",
+            lineHeight: "var(--line-height-xl)",
+            color: "var(--color-ink)",
+            margin: 0,
+          }}
+        >
+          Restaurants
+        </h1>
+        <p
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: "var(--font-size-2xs)",
+            lineHeight: "var(--line-height-sm)",
+            color: "var(--color-ink-muted)",
+            margin: 0,
+          }}
+        >
+          {restaurants.length > 0
+            ? `${restaurants.length} adresses sélectionnées par Le Guide`
+            : "Sélection Michelin"}
+        </p>
+      </header>
       <Suspense
         fallback={<Skeleton style={{ height: "80px", borderRadius: "var(--radius-md)" }} />}
       >

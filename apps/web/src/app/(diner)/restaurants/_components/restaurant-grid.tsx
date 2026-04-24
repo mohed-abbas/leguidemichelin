@@ -1,4 +1,4 @@
-import { RestaurantCard } from "./restaurant-card";
+import { RestaurantInfoCard } from "@/app/(diner)/map/_components/RestaurantInfoCard";
 import type { RestaurantResponseType } from "@repo/shared-schemas";
 
 interface RestaurantGridProps {
@@ -17,13 +17,18 @@ export function RestaurantGrid({ restaurants }: RestaurantGridProps) {
   return (
     <div
       style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+        display: "flex",
+        flexDirection: "column",
         gap: "var(--space-md)",
       }}
     >
       {restaurants.map((r) => (
-        <RestaurantCard key={r.id} restaurant={r} />
+        <RestaurantInfoCard
+          key={r.id}
+          restaurant={r}
+          closable={false}
+          isFavorited={r.isFavorited ?? false}
+        />
       ))}
     </div>
   );
