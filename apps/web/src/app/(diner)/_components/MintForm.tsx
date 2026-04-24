@@ -3,29 +3,25 @@
 /**
  * MintForm — client component for minting a souvenir at /scan/[restaurantId].
  *
- * Responsibilities:
- *  - Renders restaurant header (name, Michelin rating stars, city)
- *  - Renders DishPicker grid controlled by react-hook-form
- *  - Custom-photo-first dual path: file input (primary) + dish default (secondary)
- *  - Optional note textarea (max 280 chars)
- *  - Sticky bottom submit button
- *  - POST /api/souvenirs as multipart FormData (NOT api.post — browser must set boundary)
- *  - On 201: markVisitedDirty, stash lastBalance/newBalance, router.push /souvenirs/:id
- *  - Per-field backend validation errors via form.setError
+ * Visual language: polaroid / "carnet de voyage" — same family as
+ * ExperienceCard + SouvenirDetailView (white paper card, masking tape,
+ * handwriting font, fork-knife emblem, gold Michelin stars).
  *
- * Canonical refs:
- *   - 04-03-PLAN.md task 3
- *   - 04-CONTEXT.md D-06 (single scrollable form), D-07 (custom-photo-first),
- *     D-08 (dual path from commit 1), D-09 (success routing)
- *   - CLAUDE.md PITFALL #1 (iOS PWA photo), PITFALL #4 (HEIC), PITFALL #7 (server-auth)
- *   - BACKEND-CONTRACT.md §Diner — Souvenirs (POST /api/souvenirs)
+ * Behaviour preserved verbatim from the prior version:
+ *  - Custom-photo-first dual path (camera + use dish default)
+ *  - Optional note (max 280)
+ *  - POST /api/souvenirs multipart (browser sets boundary)
+ *  - router.push(`/souvenirs/:id`) on 201
+ *  - sessionStorage lastBalance / newBalance stash
+ *  - Per-field backend validation errors + toast for coded errors
  */
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Star } from "lucide-react";
+import { Camera, RotateCcw, Star } from "lucide-react";
 import { toast } from "sonner";
 import {
   SouvenirMintInput,
@@ -53,7 +49,6 @@ interface MintFormProps {
   menu: RestaurantMenuResponseType;
 }
 
-/** Render filled star icons for a Michelin rating. */
 function MichelinStars({ rating }: { rating: RestaurantResponseType["michelinRating"] }) {
   if (rating === "BIB") {
     return (
@@ -68,20 +63,68 @@ function MichelinStars({ rating }: { rating: RestaurantResponseType["michelinRat
       </span>
     );
   }
-
   const count = rating === "ONE" ? 1 : rating === "TWO" ? 2 : 3;
   return (
-    <span style={{ display: "inline-flex", gap: "2px", alignItems: "center" }}>
+    <span
+      style={{ display: "inline-flex", gap: 2, alignItems: "center" }}
+      aria-label={`${count} étoile${count > 1 ? "s" : ""} Michelin`}
+    >
       {Array.from({ length: count }).map((_, i) => (
         <Star
           key={i}
-          size={16}
+          size={14}
           fill="var(--color-accent-gold)"
           color="var(--color-accent-gold)"
-          aria-hidden="true"
+          aria-hidden
         />
       ))}
     </span>
+  );
+}
+
+function MintHeader() {
+  const router = useRouter();
+  return (
+    <header style={{ position: "relative", height: 78 }}>
+      <button
+        type="button"
+        aria-label="Retour"
+        onClick={() => router.back()}
+        style={{
+          position: "absolute",
+          top: 49,
+          left: 16,
+          width: 29,
+          height: 29,
+          padding: 0,
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Image src="/icons/map/arrow-back.svg" alt="" width={29} height={29} priority />
+      </button>
+      <h1
+        style={{
+          position: "absolute",
+          top: 51,
+          left: "50%",
+          transform: "translateX(-50%)",
+          margin: 0,
+          fontFamily: "var(--font-sans)",
+          fontSize: 16,
+          fontWeight: "var(--font-weight-bold)",
+          color: "var(--color-ink)",
+          lineHeight: "26px",
+          whiteSpace: "nowrap",
+        }}
+      >
+        Nouveau souvenir
+      </h1>
+    </header>
   );
 }
 
@@ -97,18 +140,26 @@ export function MintForm({ restaurant, menu }: MintFormProps) {
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   const [useDefault, setUseDefault] = useState(false);
   const [selectedHasDefault, setSelectedHasDefault] = useState(false);
+  const [selectedDefaultKey, setSelectedDefaultKey] = useState<string | null>(null);
 
   const dishId = form.watch("dishId");
+  const note = form.watch("note") ?? "";
   const isSubmitting = form.formState.isSubmitting;
   const hasDishes = menu.dishes.length > 0;
+  const selectedDish = menu.dishes.find((d) => d.id === dishId);
 
-  // Revoke the blob URL on unmount (or when a new preview replaces it) so
-  // the last-selected photo does not leak for the rest of the tab's lifetime.
   useEffect(() => {
     return () => {
       if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
     };
   }, [photoPreviewUrl]);
+
+  // Keep the dish's default image key in sync with the current selection so the
+  // polaroid preview can show it when the user chooses "Utiliser la photo du plat".
+  useEffect(() => {
+    const d = menu.dishes.find((x) => x.id === dishId);
+    setSelectedDefaultKey(d?.defaultImageKey ?? null);
+  }, [dishId, menu.dishes]);
 
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0] ?? null;
@@ -134,8 +185,6 @@ export function MintForm({ restaurant, menu }: MintFormProps) {
     const fd = new FormData();
     fd.append("dishId", values.dishId);
     if (values.note) fd.append("note", values.note);
-    // Only append image if the user took/selected a custom photo.
-    // When useDefault=true, the server uses Dish.defaultImageKey automatically.
     if (photo && !useDefault) fd.append("image", photo);
 
     try {
@@ -143,15 +192,9 @@ export function MintForm({ restaurant, menu }: MintFormProps) {
         method: "POST",
         credentials: "include",
         body: fd,
-        // Do NOT set Content-Type — browser must set multipart/form-data; boundary=... automatically.
       });
 
       if (!res.ok) {
-        // Fallback payload when the server returns a non-JSON error body
-        // (e.g. an upstream 502 before the API layer formats a proper
-        // envelope). "internal_error" is not in ErrorCode.enum, so the
-        // switch below falls through to the default French copy instead of
-        // surfacing a raw "500 internal" to the user.
         const payload = await res
           .json()
           .catch(() => ({ error: "internal_error", message: "Erreur serveur" }));
@@ -163,10 +206,8 @@ export function MintForm({ restaurant, menu }: MintFormProps) {
 
       const souvenir = (await res.json()) as SouvenirResponseType;
 
-      // Mark map dirty so next /map or MapPreview mount refetches visited pins.
       useMapStore.getState().markVisitedDirty();
 
-      // Stash pre-mint balance so the reveal page can animate old → new.
       try {
         const pointsRes = await fetch("/api/me/points", { credentials: "include" });
         if (pointsRes.ok) {
@@ -177,7 +218,7 @@ export function MintForm({ restaurant, menu }: MintFormProps) {
           sessionStorage.setItem("newBalance", String(newBalance));
         }
       } catch {
-        // Reveal page falls back to 0 if this stash fails — non-critical.
+        // Non-critical — reveal page falls back to 0.
       }
 
       router.push(`/souvenirs/${souvenir.id}`);
@@ -214,100 +255,137 @@ export function MintForm({ restaurant, menu }: MintFormProps) {
     }
   }
 
+  const previewSrc = photoPreviewUrl
+    ? photoPreviewUrl
+    : useDefault && selectedDefaultKey
+      ? `/api/images/${selectedDefaultKey}`
+      : null;
+
+  const hasPreview = Boolean(previewSrc);
+  const photoButtonLabel = photo
+    ? "Reprendre la photo"
+    : useDefault
+      ? "Prendre ma propre photo"
+      : "Prendre une photo";
+
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "var(--space-lg)",
-          paddingBottom: "80px", // space for sticky submit
-        }}
-      >
-        {/* ── Restaurant header ───────────────────────────────────────── */}
-        <div
+    <div style={{ display: "flex", flexDirection: "column", paddingBottom: 32 }}>
+      <MintHeader />
+
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
           style={{
-            background: "var(--color-surface)",
-            borderRadius: "12px",
-            padding: "var(--space-md)",
-            boxShadow: "0 0 0 1px var(--color-border)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 28,
+            paddingInline: 15,
+            paddingTop: 16,
+            paddingBottom: 120, // space for sticky submit
           }}
         >
-          <h1
-            style={{
-              fontSize: "var(--font-size-xl)",
-              fontWeight: "var(--font-weight-semibold)",
-              color: "var(--color-ink)",
-              margin: 0,
-              lineHeight: 1.2,
-            }}
-          >
-            {restaurant.name}
-          </h1>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "var(--space-sm)",
-              marginTop: "var(--space-xs)",
-            }}
-          >
-            <MichelinStars rating={restaurant.michelinRating} />
+          {/* ── Restaurant hero (same typographic rhythm as ExperienceCard) ── */}
+          <section style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <h2
+                style={{
+                  margin: 0,
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 24,
+                  fontWeight: "var(--font-weight-regular)",
+                  lineHeight: "normal",
+                  color: "var(--color-ink)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {restaurant.name}
+              </h2>
+              <Image
+                src="/images/chasseur/icon-fork-knife-emblem.svg"
+                alt=""
+                width={14}
+                height={22}
+                style={{ flexShrink: 0 }}
+              />
+            </div>
+            <div
+              style={{
+                marginTop: 4,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                fontFamily: "var(--font-sans)",
+                fontSize: "var(--font-size-sm)",
+                color: "var(--color-ink)",
+              }}
+            >
+              <MichelinStars rating={restaurant.michelinRating} />
+              <span aria-hidden>·</span>
+              <span style={{ color: "var(--color-ink-muted)" }}>{restaurant.city}</span>
+            </div>
+            <p
+              style={{
+                margin: 0,
+                marginTop: 10,
+                fontFamily: "var(--font-handwriting), cursive",
+                fontSize: 20,
+                lineHeight: "22px",
+                color: "var(--color-ink)",
+              }}
+            >
+              Un nouveau souvenir à épingler&nbsp;…
+            </p>
+          </section>
+
+          {/* ── Dish picker ─────────────────────────────────────────────── */}
+          <FormField
+            control={form.control}
+            name="dishId"
+            render={() => (
+              <FormItem>
+                <FormLabel
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: "var(--font-size-sm)",
+                    fontWeight: "var(--font-weight-bold)",
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                    color: "var(--color-ink-muted)",
+                  }}
+                >
+                  Quel plat avez-vous savouré ?
+                </FormLabel>
+                <FormControl>
+                  <DishPicker
+                    dishes={menu.dishes}
+                    value={dishId}
+                    onChange={(id) => form.setValue("dishId", id, { shouldValidate: true })}
+                    onDefaultImageAvailable={setSelectedHasDefault}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* ── Polaroid photo frame ────────────────────────────────────── */}
+          <section style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <span
               style={{
+                fontFamily: "var(--font-sans)",
                 fontSize: "var(--font-size-sm)",
+                fontWeight: "var(--font-weight-bold)",
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
                 color: "var(--color-ink-muted)",
               }}
             >
-              {restaurant.city}
+              Immortalisez votre plat
             </span>
-          </div>
-        </div>
 
-        {/* ── Dish picker ─────────────────────────────────────────────── */}
-        <FormField
-          control={form.control}
-          name="dishId"
-          render={() => (
-            <FormItem>
-              <FormLabel
-                style={{
-                  fontSize: "var(--font-size-base)",
-                  fontWeight: "var(--font-weight-semibold)",
-                  color: "var(--color-ink)",
-                }}
-              >
-                Quel plat avez-vous savouré ?
-              </FormLabel>
-              <FormControl>
-                <DishPicker
-                  dishes={menu.dishes}
-                  value={dishId}
-                  onChange={(id) => form.setValue("dishId", id, { shouldValidate: true })}
-                  onDefaultImageAvailable={setSelectedHasDefault}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* ── Photo area ──────────────────────────────────────────────── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
-          <span
-            style={{
-              fontSize: "var(--font-size-base)",
-              fontWeight: "var(--font-weight-semibold)",
-              color: "var(--color-ink)",
-            }}
-          >
-            Immortalisez votre plat
-          </span>
-
-          {/* Primary CTA — custom photo (D-07: custom-photo-first) */}
-          <div>
-            {/* Hidden file input: capture=environment for mobile camera + fallback for iOS PWA */}
+            {/* Hidden file input */}
             <input
               id="mint-photo-input"
               type="file"
@@ -316,146 +394,312 @@ export function MintForm({ restaurant, menu }: MintFormProps) {
               hidden
               onChange={handlePhotoChange}
             />
-            <Button
+
+            {/* Polaroid frame — mirrors ExperienceCard proportions (photo 219 + caption strip) */}
+            <button
               type="button"
               onClick={() => document.getElementById("mint-photo-input")?.click()}
-              style={{ width: "100%" }}
+              aria-label={hasPreview ? "Remplacer la photo" : "Prendre une photo"}
+              style={{
+                all: "unset",
+                position: "relative",
+                display: "block",
+                width: "100%",
+                height: 300,
+                background: "var(--color-surface)",
+                borderRadius: 2,
+                boxShadow: "var(--shadow-card)",
+                cursor: "pointer",
+                marginTop: 6,
+              }}
             >
-              {photo ? "Remplacer la photo" : "Prendre une photo"}
-            </Button>
-          </div>
-
-          {/* Photo preview */}
-          {photo && photoPreviewUrl && (
-            <div style={{ position: "relative", display: "inline-block" }}>
-              <img
-                src={photoPreviewUrl}
-                alt="Aperçu de votre photo"
+              {/* Masking tape */}
+              <div
+                aria-hidden
                 style={{
-                  width: "100%",
-                  maxHeight: "200px",
-                  objectFit: "cover",
-                  borderRadius: "8px",
-                  display: "block",
+                  position: "absolute",
+                  top: 0,
+                  left: "50%",
+                  transform: "translate(-50%, -11px)",
+                  width: 171,
+                  height: 33,
+                  zIndex: 2,
+                  pointerEvents: "none",
                 }}
-              />
+              >
+                <img
+                  src="/images/chasseur/polaroid-tape.png"
+                  alt=""
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              </div>
+
+              {/* Photo / placeholder well */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 13,
+                  left: 16,
+                  right: 15,
+                  height: 219,
+                  overflow: "hidden",
+                  borderRadius: 2,
+                  background: "var(--color-surface-muted)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {hasPreview ? (
+                  <img
+                    src={previewSrc!}
+                    alt={selectedDish?.name ?? "Aperçu"}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      display: "block",
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 10,
+                      color: "var(--color-ink-muted)",
+                    }}
+                  >
+                    <Camera size={36} strokeWidth={1.4} aria-hidden />
+                    <span
+                      style={{
+                        fontFamily: "var(--font-handwriting), cursive",
+                        fontSize: 20,
+                        lineHeight: "22px",
+                        color: "var(--color-ink)",
+                      }}
+                    >
+                      épinglez votre photo ici
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Handwritten caption strip — mirrors ExperienceCard */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 238,
+                  left: 25,
+                  right: 18,
+                  maxHeight: 44,
+                  overflow: "hidden",
+                }}
+              >
+                <p
+                  style={{
+                    margin: 0,
+                    fontFamily: "var(--font-handwriting), cursive",
+                    fontSize: 20,
+                    fontWeight: 400,
+                    lineHeight: "22px",
+                    color: "var(--color-ink)",
+                    whiteSpace: "pre-wrap",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  }}
+                >
+                  {note.trim() || selectedDish?.name || "choisissez un plat …"}
+                </p>
+              </div>
+
+              {/* Bottom-right emblem anchor (mirrors flower-stamp anchor) */}
+              <div
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  right: 14,
+                  bottom: 14,
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                <Image src="/images/chasseur/icon-flower-stamp.svg" alt="" width={18} height={20} />
+              </div>
+            </button>
+
+            {/* Photo controls row */}
+            <div style={{ display: "flex", gap: "var(--space-sm)" }}>
+              <Button
+                type="button"
+                onClick={() => document.getElementById("mint-photo-input")?.click()}
+                style={{ flex: 1 }}
+              >
+                <Camera size={14} aria-hidden />
+                {photoButtonLabel}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!selectedHasDefault}
+                onClick={handleUseDishDefault}
+                style={{ flex: 1 }}
+              >
+                <RotateCcw size={14} aria-hidden />
+                Photo du plat
+              </Button>
+            </div>
+            {!selectedHasDefault && (
               <p
                 style={{
+                  fontFamily: "var(--font-sans)",
                   fontSize: "var(--font-size-sm)",
                   color: "var(--color-ink-muted)",
-                  marginTop: "var(--space-xs)",
+                  margin: 0,
+                }}
+              >
+                Sélectionnez un plat avec une photo pour activer cette option.
+              </p>
+            )}
+            {photo && (
+              <p
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "var(--font-size-sm)",
+                  color: "var(--color-ink-muted)",
+                  margin: 0,
                 }}
               >
                 {photo.name}
               </p>
-            </div>
-          )}
-
-          {/* Indicator when dish default is selected */}
-          {useDefault && (
-            <p
-              style={{
-                fontSize: "var(--font-size-sm)",
-                color: "var(--color-success)",
-                margin: 0,
-              }}
-            >
-              Photo du plat sélectionnée.
-            </p>
-          )}
-
-          {/* Secondary CTA — use dish default photo (D-08) */}
-          <Button
-            type="button"
-            variant="outline"
-            disabled={!selectedHasDefault}
-            onClick={handleUseDishDefault}
-            style={{ width: "100%" }}
-          >
-            Utiliser la photo du plat
-          </Button>
-          {!selectedHasDefault && (
-            <p
-              style={{
-                fontSize: "var(--font-size-sm)",
-                color: "var(--color-ink-muted)",
-                margin: 0,
-              }}
-            >
-              Sélectionnez un plat avec une photo pour activer cette option.
-            </p>
-          )}
-        </div>
-
-        {/* ── Note textarea ───────────────────────────────────────────── */}
-        <FormField
-          control={form.control}
-          name="note"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel
+            )}
+            {useDefault && (
+              <p
                 style={{
-                  fontSize: "var(--font-size-base)",
-                  fontWeight: "var(--font-weight-semibold)",
-                  color: "var(--color-ink)",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "var(--font-size-sm)",
+                  color: "var(--color-success)",
+                  margin: 0,
                 }}
               >
-                Note personnelle{" "}
-                <span
+                Photo du plat sélectionnée.
+              </p>
+            )}
+          </section>
+
+          {/* ── Note — handwriting on lined paper ───────────────────────── */}
+          <FormField
+            control={form.control}
+            name="note"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel
                   style={{
-                    fontWeight: "var(--font-weight-regular)",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: "var(--font-size-sm)",
+                    fontWeight: "var(--font-weight-bold)",
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
                     color: "var(--color-ink-muted)",
                   }}
                 >
-                  (optionnelle)
-                </span>
-              </FormLabel>
-              <FormControl>
-                <textarea
-                  {...field}
-                  maxLength={280}
-                  rows={3}
-                  placeholder="Vos impressions sur ce plat…"
-                  style={{
-                    width: "100%",
-                    padding: "var(--space-sm) var(--space-md)",
-                    border: "1px solid var(--color-border)",
-                    borderRadius: "8px",
-                    fontSize: "var(--font-size-base)",
-                    color: "var(--color-ink)",
-                    background: "var(--color-surface)",
-                    resize: "vertical",
-                    fontFamily: "var(--font-sans)",
-                    boxSizing: "border-box",
-                    outline: "none",
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                  Votre note personnelle
+                </FormLabel>
+                <FormControl>
+                  <div
+                    style={{
+                      position: "relative",
+                      background: "var(--color-surface)",
+                      borderRadius: 2,
+                      boxShadow: "var(--shadow-card)",
+                      padding: "18px 20px 20px",
+                      // Faint horizontal rules drawn with a repeating background —
+                      // evokes carnet de voyage without raw hex (uses border token).
+                      backgroundImage:
+                        "repeating-linear-gradient(to bottom, transparent 0, transparent 27px, var(--color-border) 27px, var(--color-border) 28px)",
+                      backgroundPosition: "0 14px",
+                    }}
+                  >
+                    <textarea
+                      {...field}
+                      maxLength={280}
+                      rows={4}
+                      placeholder="Ce qui vous a marqué …"
+                      style={{
+                        width: "100%",
+                        border: "none",
+                        outline: "none",
+                        background: "transparent",
+                        resize: "none",
+                        fontFamily: "var(--font-handwriting), cursive",
+                        fontSize: 20,
+                        lineHeight: "28px",
+                        color: "var(--color-ink)",
+                        padding: 0,
+                      }}
+                    />
+                    <span
+                      style={{
+                        position: "absolute",
+                        right: 14,
+                        bottom: 10,
+                        fontFamily: "var(--font-sans)",
+                        fontSize: "var(--font-size-xs)",
+                        color: "var(--color-ink-muted)",
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      {note.length}/280
+                    </span>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </form>
+      </Form>
 
-        {/* ── Sticky submit ───────────────────────────────────────────── */}
+      {/* ── Sticky submit — overlays the form, driven by the same submit handler ── */}
+      <div
+        style={{
+          position: "fixed",
+          left: 0,
+          right: 0,
+          bottom: "calc(85px + env(safe-area-inset-bottom))",
+          zIndex: "var(--z-sticky)",
+          display: "flex",
+          justifyContent: "center",
+          paddingInline: 15,
+          pointerEvents: "none",
+        }}
+      >
         <div
           style={{
-            position: "sticky",
-            bottom: 0,
-            background: "var(--color-bg)",
-            padding: "var(--space-md)",
-            borderTop: "1px solid var(--color-border)",
-            marginInline: "calc(-1 * var(--space-md))",
+            width: "100%",
+            maxWidth: 768 - 30,
+            pointerEvents: "auto",
           }}
         >
           <Button
-            type="submit"
+            type="button"
+            onClick={form.handleSubmit(onSubmit)}
             disabled={isSubmitting || !dishId || !hasDishes}
-            style={{ width: "100%" }}
+            style={{
+              width: "100%",
+              height: 52,
+              fontSize: "var(--font-size-base)",
+              fontWeight: "var(--font-weight-semibold)",
+              boxShadow: "var(--shadow-md)",
+            }}
           >
             {isSubmitting ? "Création…" : "Créer le souvenir"}
           </Button>
         </div>
-      </form>
-    </Form>
+      </div>
+    </div>
   );
 }
