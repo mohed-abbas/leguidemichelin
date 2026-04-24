@@ -3,9 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Camera } from "lucide-react";
 import type { SouvenirResponseType } from "@repo/shared-schemas";
-
-import { Button } from "@/components/ui/button";
 
 const MONTHS_FR = [
   "Janvier",
@@ -302,7 +301,7 @@ export function SouvenirDetailView({ souvenir }: { souvenir: SouvenirResponseTyp
           </strong>
         </div>
 
-        {/* CTAs */}
+        {/* CTAs — polaroid-pill language matching /scan */}
         <div
           style={{
             display: "flex",
@@ -311,30 +310,85 @@ export function SouvenirDetailView({ souvenir }: { souvenir: SouvenirResponseTyp
             marginTop: 20,
           }}
         >
-          <Button
-            style={{ width: "100%" }}
-            nativeButton={false}
-            render={<Link href={`/review/${souvenir.restaurantId}?souvenirId=${souvenir.id}`} />}
+          <Link
+            href={`/review/${souvenir.restaurantId}?souvenirId=${souvenir.id}`}
+            style={{
+              boxSizing: "border-box",
+              width: "100%",
+              height: 52,
+              borderRadius: 12,
+              background: "var(--color-primary)",
+              color: "var(--color-primary-fg)",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              fontFamily: "var(--font-sans)",
+              fontSize: "var(--font-size-base)",
+              fontWeight: "var(--font-weight-bold)",
+              boxShadow: "var(--shadow-card)",
+              textDecoration: "none",
+            }}
           >
             Donner mon avis
-          </Button>
-          <div style={{ display: "flex", gap: "var(--space-md)" }}>
-            <Button
-              variant="outline"
-              style={{ flex: 1 }}
-              nativeButton={false}
-              render={<Link href="/chasseur" />}
+          </Link>
+          <div style={{ display: "flex", gap: "var(--space-sm)" }}>
+            <Link
+              href="/chasseur"
+              style={{
+                boxSizing: "border-box",
+                flex: 1,
+                height: 52,
+                borderRadius: 12,
+                background: "var(--color-surface)",
+                color: "var(--color-ink)",
+                border: "1px solid var(--color-border)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                fontFamily: "var(--font-sans)",
+                fontSize: "var(--font-size-sm)",
+                fontWeight: "var(--font-weight-bold)",
+                boxShadow: "var(--shadow-card)",
+                textDecoration: "none",
+                textAlign: "center",
+              }}
             >
+              <Image
+                src="/images/chasseur/icon-fork-knife-emblem.svg"
+                alt=""
+                width={12}
+                height={18}
+                aria-hidden
+              />
               Mes expériences
-            </Button>
-            <Button
-              variant="outline"
-              style={{ flex: 1 }}
-              nativeButton={false}
-              render={<Link href="/scan" />}
+            </Link>
+            <Link
+              href="/scan"
+              style={{
+                boxSizing: "border-box",
+                flex: 1,
+                height: 52,
+                borderRadius: 12,
+                background: "var(--color-surface)",
+                color: "var(--color-ink)",
+                border: "1px solid var(--color-border)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                fontFamily: "var(--font-sans)",
+                fontSize: "var(--font-size-sm)",
+                fontWeight: "var(--font-weight-bold)",
+                boxShadow: "var(--shadow-card)",
+                textDecoration: "none",
+                textAlign: "center",
+              }}
             >
+              <Camera size={14} aria-hidden />
               Scanner à nouveau
-            </Button>
+            </Link>
           </div>
         </div>
       </article>
