@@ -192,7 +192,7 @@ export function MapCanvas() {
         //   • default mode, selected     → dark
         //   • chasseur mode, un-selected → dark
         //   • chasseur mode, selected    → red
-        // The selection/mode XOR is pre-computed into each feature's
+        // The selection/mode XNOR is pre-computed into each feature's
         // `colorVariant` prop below, so the layer only reads feature data.
         "icon-image": [
           "concat",
@@ -305,8 +305,8 @@ export function MapCanvas() {
       type: "FeatureCollection" as const,
       features: pins.map((r) => {
         const isSelected = selectedRestaurant?.id === r.id;
-        // XOR: default+unselected or chasseur+selected → red; else dark.
-        const colorVariant = isSelected !== chasseurMode ? "red" : "dark";
+        // XNOR: default+unselected or chasseur+selected → red; else dark.
+        const colorVariant = isSelected === chasseurMode ? "red" : "dark";
         return {
           type: "Feature" as const,
           id: r.id,
