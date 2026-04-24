@@ -83,9 +83,8 @@ export function RestaurantInfoCard({
   const displayFavorited = hydrated ? favorited : (isFavorited ?? favorited);
   const emblem = emblemFromRating(restaurant.michelinRating);
   const emblemSrc = EMBLEM_SRC[emblem];
-  const multiplier = targetFromRating(restaurant.michelinRating);
   const priceBand = restaurant.michelinRating === "THREE" ? "€€€" : "€€";
-  const target = multiplier;
+  const target = targetFromRating(restaurant.michelinRating);
   const visits = showScore ? mockVisits(restaurant.id, target) : 0;
 
   return (
@@ -293,38 +292,46 @@ export function RestaurantInfoCard({
           justifyContent: "space-between",
         }}
       >
-        {/* Score slot — toggles meaning with chasseur mode:
-             ▪ chasseur OFF → "Nx" + emblem (points multiplier)
-             ▪ chasseur ON  → "visits/target" + emblem (user progress) */}
-        <div
-          aria-label={
-            showScore ? `${visits} visites sur ${target}` : `Multiplicateur ${multiplier}×`
-          }
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            fontFamily: "var(--font-sans)",
-            fontSize: 14,
-            fontWeight: "var(--font-weight-bold)",
-            color: "var(--color-ink)",
-          }}
-        >
-          <span>{showScore ? `${visits}/${target}` : `${multiplier}x`}</span>
-          <Image
-            src="/images/chasseur/icon-star-mini-red.svg"
-            alt=""
-            width={18}
-            height={21}
-            style={{ display: "block" }}
-          />
-        </div>
+        {/* Score slot — only shown when chasseur mode is active (D-M2-a /
+            Figma node 64:571). Rendered empty otherwise — no "Nx" fallback
+            per Figma node 65:611 (chasseur OFF leaves the left slot blank). */}
+        {showScore ? (
+          <div
+            aria-label={`${visits} visites sur ${target}`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontFamily: "var(--font-sans)",
+              fontSize: 14,
+              fontWeight: "var(--font-weight-bold)",
+              color: "var(--color-ink)",
+            }}
+          >
+            <span>{`${visits}/${target}`}</span>
+            <Image
+              src="/images/chasseur/icon-star-mini-red.svg"
+              alt=""
+              width={18}
+              height={21}
+              style={{ display: "block" }}
+            />
+          </div>
+        ) : null}
 
         {/* Action icons — chasseur-SVG set (see CollectionCard). Notes /
             Visited / Bookmark are visual-only per SPEC Req 8. Heart is fully
             interactive through useFavoriteToggle. On the /favorites variant
-            only the heart shows (D-F2). */}
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 16 }}>
+            only the heart shows (D-F2). `marginLeft: auto` pins them right
+            regardless of whether the score slot is rendered. */}
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 16,
+            marginLeft: "auto",
+          }}
+        >
           {variant !== "favorites" && (
             <>
               <Image
