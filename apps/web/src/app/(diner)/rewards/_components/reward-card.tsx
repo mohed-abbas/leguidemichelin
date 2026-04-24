@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { RedeemConfirmDialog } from "./redeem-confirm-dialog";
 import type { RewardResponseType } from "@repo/shared-schemas";
 
@@ -15,6 +15,37 @@ function formatPoints(n: number): string {
   return n.toLocaleString("fr-FR");
 }
 
+const TITLE_EMPH_PATTERN =
+  /([+-]?\d+(?:[.,]\d+)?\s*%|Bib Gourmand|\d\s+[ÉEéeÈè]toile?s?|[ÉEéeÈè]toil(?:é|e|és|es)?)/g;
+
+function renderStyledTitle(title: string) {
+  const nodes: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  const re = new RegExp(TITLE_EMPH_PATTERN);
+  while ((match = re.exec(title)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(<Fragment key={`t-${lastIndex}`}>{title.slice(lastIndex, match.index)}</Fragment>);
+    }
+    nodes.push(
+      <strong
+        key={`e-${match.index}`}
+        style={{
+          color: "var(--color-primary)",
+          fontWeight: "var(--font-weight-bold)",
+        }}
+      >
+        {match[0]}
+      </strong>,
+    );
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < title.length) {
+    nodes.push(<Fragment key={`t-${lastIndex}`}>{title.slice(lastIndex)}</Fragment>);
+  }
+  return nodes.length > 0 ? nodes : title;
+}
+
 export function RewardCard({ reward, balance, onRedeemed }: RewardCardProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const affordable = balance >= reward.pointsCost;
@@ -26,7 +57,7 @@ export function RewardCard({ reward, balance, onRedeemed }: RewardCardProps) {
         background: "var(--color-surface)",
         borderRadius: 11,
         boxShadow: "0 0 9px 0 rgba(0, 0, 0, 0.07)",
-        padding: "24px 16px 22px 15px",
+        padding: "26px 16px 17px 15px",
         minHeight: 202,
         display: "flex",
         flexDirection: "column",
@@ -57,13 +88,13 @@ export function RewardCard({ reward, balance, onRedeemed }: RewardCardProps) {
           lineHeight: 1.15,
         }}
       >
-        {reward.title}
+        {renderStyledTitle(reward.title)}
       </h3>
 
       {reward.description ? (
         <p
           style={{
-            margin: "13px 18px 0 0",
+            margin: "22px 18px 0 0",
             fontFamily: "var(--font-sans)",
             fontSize: 13,
             fontWeight: "var(--font-weight-regular)",
@@ -82,7 +113,7 @@ export function RewardCard({ reward, balance, onRedeemed }: RewardCardProps) {
       <div
         style={{
           marginTop: "auto",
-          paddingTop: 24,
+          paddingTop: 29,
           paddingLeft: 13,
           display: "flex",
           alignItems: "center",

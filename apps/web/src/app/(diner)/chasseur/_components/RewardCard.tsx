@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 
 import type { RewardResponseType } from "@repo/shared-schemas";
 
@@ -15,6 +16,8 @@ function formatPoints(n: number): string {
 }
 
 export function RewardCard({ rewards, balance }: Props) {
+  const [showMore, setShowMore] = useState(false);
+
   return (
     <section
       style={{
@@ -75,36 +78,161 @@ export function RewardCard({ rewards, balance }: Props) {
         </span>
       </header>
 
-      {rewards.length === 0 ? (
-        <EmptyRewardCard />
+      {showMore ? (
+        rewards.length === 0 ? (
+          <EmptyRewardCard />
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {rewards.map((r) => (
+              <RewardRow key={r.id} reward={r} balance={balance} />
+            ))}
+          </div>
+        )
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {rewards.map((r) => (
-            <RewardRow key={r.id} reward={r} balance={balance} />
-          ))}
-        </div>
+        <FigmaBibGourmandCard />
       )}
 
-      <Link
-        href="/rewards"
+      <button
+        type="button"
+        onClick={() => setShowMore((v) => !v)}
         style={{
           alignSelf: "flex-start",
           marginTop: 4,
+          padding: 0,
+          background: "transparent",
+          border: "none",
+          fontFamily: "var(--font-sans)",
           fontSize: 14,
           fontWeight: "var(--font-weight-bold)",
           color: "var(--color-primary)",
-          textDecoration: "none",
+          cursor: "pointer",
           display: "inline-flex",
           alignItems: "center",
           gap: 6,
         }}
+        aria-expanded={showMore}
       >
-        Voir toutes les récompenses
+        {showMore ? "Voir moins" : "Voir plus de récompenses"}
         <span aria-hidden style={{ fontSize: 16, lineHeight: 1 }}>
-          →
+          {showMore ? "←" : "→"}
         </span>
-      </Link>
+      </button>
     </section>
+  );
+}
+
+/**
+ * Hardcoded card rendering the exact Figma node 58:428 ("-30% Bib Gourmand").
+ * This is the default view on /chasseur — matches the design verbatim.
+ */
+function FigmaBibGourmandCard() {
+  return (
+    <article
+      style={{
+        position: "relative",
+        background: "var(--color-surface)",
+        borderRadius: 11,
+        boxShadow: "0 0 9px 0 rgba(0, 0, 0, 0.07)",
+        padding: "26px 16px 17px 15px",
+        minHeight: 202,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Image
+        src="/images/chasseur/icon-bib-gourmand.svg"
+        alt=""
+        width={36}
+        height={31}
+        aria-hidden
+        style={{ position: "absolute", top: 22, right: 18, flex: "0 0 auto" }}
+      />
+
+      <h3
+        style={{
+          margin: 0,
+          paddingRight: 60,
+          fontFamily: "var(--font-sans)",
+          fontSize: 24,
+          fontWeight: "var(--font-weight-regular)",
+          color: "var(--color-ink)",
+          lineHeight: 1.15,
+        }}
+      >
+        <strong style={{ color: "var(--color-primary)", fontWeight: "var(--font-weight-bold)" }}>
+          -30%
+        </strong>
+        <span style={{ color: "var(--color-primary)" }}> </span>
+        sur ta prochaine expérience{" "}
+        <strong style={{ color: "var(--color-primary)", fontWeight: "var(--font-weight-bold)" }}>
+          Bib Gourmand
+        </strong>
+      </h3>
+
+      <p
+        style={{
+          margin: "22px 18px 0 0",
+          fontFamily: "var(--font-sans)",
+          fontSize: 13,
+          fontWeight: "var(--font-weight-regular)",
+          color: "var(--color-ink-muted)",
+          lineHeight: "17px",
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden",
+        }}
+      >
+        Tu peux utiliser ce bon à dans n’importe quel restaurant Bib Gourmand. Enrichis ton
+        expérience culinaire en do…
+      </p>
+
+      <div
+        style={{
+          marginTop: "auto",
+          paddingTop: 29,
+          paddingLeft: 13,
+          display: "flex",
+          alignItems: "center",
+          gap: 18,
+        }}
+      >
+        <Link
+          href="/rewards"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 140,
+            height: 44,
+            borderRadius: 35,
+            background: "var(--color-primary)",
+            color: "var(--color-primary-fg)",
+            fontFamily: "var(--font-sans)",
+            fontSize: 14,
+            fontWeight: "var(--font-weight-regular)",
+            lineHeight: "16.2px",
+            textDecoration: "none",
+          }}
+        >
+          J’utilise mon bon
+        </Link>
+
+        <Link
+          href="/rewards"
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: 14,
+            fontWeight: "var(--font-weight-regular)",
+            color: "var(--color-ink)",
+            lineHeight: "16.2px",
+            textDecoration: "none",
+          }}
+        >
+          Détails
+        </Link>
+      </div>
+    </article>
   );
 }
 
@@ -117,7 +245,7 @@ function RewardRow({ reward, balance }: { reward: RewardResponseType; balance: n
         background: "var(--color-surface)",
         borderRadius: 11,
         boxShadow: "0 0 9px 0 rgba(0, 0, 0, 0.07)",
-        padding: "24px 16px 22px 15px",
+        padding: "26px 16px 17px 15px",
         minHeight: 202,
         display: "flex",
         flexDirection: "column",
@@ -149,7 +277,7 @@ function RewardRow({ reward, balance }: { reward: RewardResponseType; balance: n
       {reward.description ? (
         <p
           style={{
-            margin: "13px 18px 0 0",
+            margin: "22px 18px 0 0",
             fontFamily: "var(--font-sans)",
             fontSize: 13,
             fontWeight: "var(--font-weight-regular)",
@@ -168,7 +296,7 @@ function RewardRow({ reward, balance }: { reward: RewardResponseType; balance: n
       <div
         style={{
           marginTop: "auto",
-          paddingTop: 24,
+          paddingTop: 29,
           paddingLeft: 13,
           display: "flex",
           alignItems: "center",
