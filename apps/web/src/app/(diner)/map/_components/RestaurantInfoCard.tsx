@@ -21,7 +21,8 @@
  */
 
 import Link from "next/link";
-import { Bookmark, Check, ClipboardList, Heart, X } from "lucide-react";
+import Image from "next/image";
+import { X } from "lucide-react";
 import { EMBLEM_SRC, emblemFromRating, mockVisits, targetFromRating } from "./PinScoreBadge";
 import type { RestaurantResponseType } from "@repo/shared-schemas";
 import { useMapStore } from "../../_stores/useMapStore";
@@ -313,23 +314,34 @@ export function RestaurantInfoCard({
           <img src={emblemSrc} alt="" width={14} height={16} style={{ display: "block" }} />
         </div>
 
-        {/* Action icons. Notes / Visited / Bookmark remain visual-only (inert,
-            no onClick) per SPEC Req 8 — wiring lands with those features.
-            They are hidden entirely on the /favorites variant (D-F2) so only
-            the heart remains. The heart itself is fully wired through
-            useFavoriteToggle. */}
-        <div style={{ display: "inline-flex", gap: 18, color: "var(--color-ink)" }}>
+        {/* Action icons — chasseur-SVG set (see CollectionCard). Notes /
+            Visited / Bookmark are visual-only per SPEC Req 8. Heart is fully
+            interactive through useFavoriteToggle. On the /favorites variant
+            only the heart shows (D-F2). */}
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 16 }}>
           {variant !== "favorites" && (
             <>
-              <button type="button" aria-label="Ajouter une note" style={actionBtnStyle}>
-                <ClipboardList size={18} aria-hidden />
-              </button>
-              <button type="button" aria-label="Marquer comme visité" style={actionBtnStyle}>
-                <Check size={18} aria-hidden />
-              </button>
-              <button type="button" aria-label="Ajouter aux signets" style={actionBtnStyle}>
-                <Bookmark size={18} aria-hidden />
-              </button>
+              <Image
+                src="/images/chasseur/icon-card-notebook.svg"
+                alt="Notes"
+                width={17}
+                height={21}
+                style={{ display: "block", objectFit: "contain" }}
+              />
+              <Image
+                src="/images/chasseur/icon-card-check.svg"
+                alt="Visité"
+                width={21}
+                height={21}
+                style={{ display: "block", objectFit: "contain" }}
+              />
+              <Image
+                src="/images/chasseur/icon-card-bookmark.svg"
+                alt="Sauvegarder"
+                width={18}
+                height={21}
+                style={{ display: "block", objectFit: "contain" }}
+              />
             </>
           )}
           <button
@@ -339,28 +351,38 @@ export function RestaurantInfoCard({
             aria-pressed={displayFavorited}
             aria-busy={isPending || undefined}
             style={{
-              ...actionBtnStyle,
-              color: displayFavorited ? "var(--color-primary)" : "inherit",
+              display: "inline-grid",
+              placeItems: "center",
+              width: 24,
+              height: 21,
+              border: "none",
+              background: "transparent",
+              padding: 0,
+              cursor: "pointer",
               opacity: isPending ? 0.6 : 1,
               pointerEvents: isPending ? "none" : "auto",
             }}
           >
-            <Heart size={18} aria-hidden fill={displayFavorited ? "currentColor" : "none"} />
+            <span
+              aria-hidden
+              style={{
+                display: "block",
+                width: 24,
+                height: 21,
+                WebkitMaskImage: "url(/images/chasseur/icon-card-heart.svg)",
+                maskImage: "url(/images/chasseur/icon-card-heart.svg)",
+                WebkitMaskRepeat: "no-repeat",
+                maskRepeat: "no-repeat",
+                WebkitMaskSize: "contain",
+                maskSize: "contain",
+                WebkitMaskPosition: "center",
+                maskPosition: "center",
+                background: displayFavorited ? "var(--color-primary)" : "var(--color-ink)",
+              }}
+            />
           </button>
         </div>
       </div>
     </div>
   );
 }
-
-const actionBtnStyle: React.CSSProperties = {
-  display: "inline-grid",
-  placeItems: "center",
-  width: 24,
-  height: 24,
-  border: "none",
-  background: "transparent",
-  color: "inherit",
-  cursor: "pointer",
-  padding: 0,
-};

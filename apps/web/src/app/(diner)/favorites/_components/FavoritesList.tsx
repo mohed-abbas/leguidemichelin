@@ -24,12 +24,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Heart } from "lucide-react";
 import { toast } from "sonner";
-import type {
-  FavoriteRestaurantCardType,
-  RestaurantResponseType,
-} from "@repo/shared-schemas";
+import type { FavoriteRestaurantCardType, RestaurantResponseType } from "@repo/shared-schemas";
 import { RestaurantInfoCard } from "../../map/_components/RestaurantInfoCard";
 import { useFavoritesStore } from "../../_stores/useFavoritesStore";
 
@@ -44,19 +40,14 @@ export function FavoritesList({ initial, loggedOut }: FavoritesListProps) {
   // seed store from SSR so RestaurantInfoCard hearts render filled on first paint
   useEffect(() => {
     if (loggedOut) return;
-    useFavoritesStore
-      .getState()
-      .seedFromList(initial.map((i) => i.restaurantId));
+    useFavoritesStore.getState().seedFromList(initial.map((i) => i.restaurantId));
     // mount-only — do not re-seed if parent rerenders with a different list
     // (store toggles already handle incremental updates)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Track which restaurantIds started in the list so we only react to removals
   // that originated from user actions on THIS list (heart clicks inside cards).
-  const initialIdsRef = useRef<Set<string>>(
-    new Set(initial.map((i) => i.restaurantId)),
-  );
+  const initialIdsRef = useRef<Set<string>>(new Set(initial.map((i) => i.restaurantId)));
 
   useEffect(() => {
     if (loggedOut) return;
@@ -87,9 +78,7 @@ export function FavoritesList({ initial, loggedOut }: FavoritesListProps) {
                   setItems(snapshot);
                   initialIdsRef.current.add(id);
                 } catch {
-                  toast.error(
-                    "Impossible de mettre à jour vos favoris. Réessayez.",
-                  );
+                  toast.error("Impossible de mettre à jour vos favoris. Réessayez.");
                 }
               },
             },
@@ -160,11 +149,22 @@ function LoggedInEmpty() {
         paddingBlock: "var(--space-2xl)",
       }}
     >
-      <Heart
-        size={48}
-        strokeWidth={1}
-        color="var(--color-ink-muted)"
+      <span
         aria-hidden
+        style={{
+          display: "block",
+          width: 48,
+          height: 42,
+          WebkitMaskImage: "url(/images/chasseur/icon-card-heart.svg)",
+          maskImage: "url(/images/chasseur/icon-card-heart.svg)",
+          WebkitMaskRepeat: "no-repeat",
+          maskRepeat: "no-repeat",
+          WebkitMaskSize: "contain",
+          maskSize: "contain",
+          WebkitMaskPosition: "center",
+          maskPosition: "center",
+          background: "var(--color-ink-muted)",
+        }}
       />
       <h2
         style={{
@@ -224,11 +224,22 @@ function LoggedOutEmpty() {
         paddingBlock: "var(--space-2xl)",
       }}
     >
-      <Heart
-        size={48}
-        strokeWidth={1}
-        color="var(--color-ink-muted)"
+      <span
         aria-hidden
+        style={{
+          display: "block",
+          width: 48,
+          height: 42,
+          WebkitMaskImage: "url(/images/chasseur/icon-card-heart.svg)",
+          maskImage: "url(/images/chasseur/icon-card-heart.svg)",
+          WebkitMaskRepeat: "no-repeat",
+          maskRepeat: "no-repeat",
+          WebkitMaskSize: "contain",
+          maskSize: "contain",
+          WebkitMaskPosition: "center",
+          maskPosition: "center",
+          background: "var(--color-ink-muted)",
+        }}
       />
       <h2
         style={{
